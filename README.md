@@ -69,7 +69,10 @@ sudo ./v2ray_manager.sh install
 ### 交互式菜单
 
 ```bash
-# 启动交互式菜单
+# 启动交互式菜单（推荐）
+2ray
+
+# 或者使用完整命令名
 v2ray_manager.sh
 ```
 
@@ -77,38 +80,48 @@ v2ray_manager.sh
 
 ```bash
 # 安装 V2Ray
-v2ray_manager.sh install
+2ray install
 
 # 查看服务状态
-v2ray_manager.sh status
+2ray status
 
 # 启动服务
-v2ray_manager.sh start
+2ray start
 
 # 停止服务
-v2ray_manager.sh stop
+2ray stop
 
 # 重启服务
-v2ray_manager.sh restart
+2ray restart
 
 # 查看日志
-v2ray_manager.sh logs
+2ray logs
 
 # 查看配置信息
-v2ray_manager.sh info
+2ray info
+
+# 查看客户端配置
+2ray client-config
 
 # 检查更新状态
-v2ray_manager.sh check-update
+2ray check-update
 
 # 更新 V2Ray 内核
-v2ray_manager.sh update
+2ray update
 
 # 卸载 V2Ray
-v2ray_manager.sh uninstall
+2ray uninstall
 
 # 查看帮助
-v2ray_manager.sh help
+2ray help
 ```
+
+### 💡 命令说明
+
+安装完成后，系统会自动创建 `2ray` 命令别名，您可以使用：
+- `2ray` - 快速访问交互式菜单
+- `2ray [命令]` - 快速执行管理命令
+- `v2ray_manager.sh` - 完整命令名（功能相同）
 
 ## 🔧 配置说明
 
@@ -131,6 +144,19 @@ v2ray_manager.sh help
 安装完成后，客户端配置信息保存在：
 - `/usr/local/v2ray/v2ray-config.txt` - 详细配置信息
 - `/usr/local/v2ray/v2ray-urls.txt` - VMess 链接
+- `/usr/local/v2ray/client-configs.txt` - 客户端配置（包含原始和反代配置）
+
+#### 查看客户端配置
+
+```bash
+# 查看客户端配置（包含原始和反代配置）
+2ray client-config
+```
+
+此功能会显示：
+- **域名反代配置**：使用域名和443端口，推荐使用
+- **IPv4 原始配置**：直接连接服务器IP，端口8080
+- **IPv6 原始配置**：直接连接服务器IPv6，端口8080
 
 ## 🌐 IP 地址获取
 

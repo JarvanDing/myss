@@ -52,6 +52,7 @@ show_help() {
     echo -e "  ${GREEN}info${NC}        ℹ️  显示信息"
     echo -e "  ${PURPLE}update${NC}      🔄 更新 V2Ray 内核"
     echo -e "  ${CYAN}check-update${NC}  📦 检查更新状态"
+    echo -e "  ${GREEN}client-config${NC} 📱 查看客户端配置"
     echo -e "  ${BLUE}help${NC}         ❓ 显示帮助"
     echo ""
     echo -e "${YELLOW}💡 使用建议:${NC}"
@@ -65,6 +66,7 @@ show_help() {
     echo "  $0 status       # 查看服务状态"
     echo "  $0 update       # 更新 V2Ray 内核"
     echo "  $0 check-update # 检查更新状态"
+    echo "  $0 client-config # 查看客户端配置"
     echo "  $0 logs         # 查看日志"
     echo "  $0 uninstall    # 卸载 V2Ray"
     echo ""
@@ -626,7 +628,7 @@ EOF
     fi
     
     cat >> "$V2RAY_INSTALL_DIR/v2ray-config.txt" << EOF
-   🌍 域名: soni.muoai.com
+   🌍 域名: 2ray.myhost.com
    🔄 缓存策略: CachingDisabled
    📋 源请求策略: Managed-AllViewer
 
@@ -666,12 +668,28 @@ install_v2ray() {
     
     generate_client_config
     
+    # 创建 2ray 命令别名
+    echo -e "${CYAN}🔗 创建 2ray 命令别名...${NC}"
+    cat > /usr/local/bin/2ray << 'EOF'
+#!/bin/bash
+# V2Ray 管理命令别名
+# 使用 2ray 命令快速管理 V2Ray
+
+exec /usr/local/bin/v2ray_manager.sh "$@"
+EOF
+
+    chmod +x /usr/local/bin/2ray
+    echo -e "${GREEN}✅ 2ray 命令创建完成${NC}"
+    echo ""
+    
     echo -e "${GREEN}🎉 V2Ray 安装完成！${NC}"
     echo ""
     echo -e "${YELLOW}📋 下一步操作:${NC}"
     echo -e "   1. 📱 复制客户端配置到你的设备"
     echo -e "   2. 🌐 配置CloudFront CDN"
-    echo -e "   3. 🔍 运行 '$0 status' 检查服务状态"
+    echo -e "   3. 🔍 运行 '2ray status' 检查服务状态"
+    echo ""
+    echo -e "${CYAN}💡 现在您可以使用 '2ray' 命令来管理 V2Ray！${NC}"
     echo ""
 }
 
@@ -729,6 +747,12 @@ uninstall_v2ray() {
         # 如果存在 v2ctl 也一并删除（兼容旧版本）
         [ -f "/usr/local/bin/v2ctl" ] && rm -f /usr/local/bin/v2ctl
         echo -e "${GREEN}✅ 二进制文件已删除${NC}"
+    fi
+    
+    # 删除 2ray 命令别名
+    if [ -f "/usr/local/bin/2ray" ]; then
+        rm -f /usr/local/bin/2ray
+        echo -e "${GREEN}✅ 2ray 命令已删除${NC}"
     fi
     
     echo -e "${CYAN}🧹 清理防火墙规则...${NC}"
@@ -974,6 +998,197 @@ check_installation() {
     echo ""
 }
 
+# 显示客户端配置
+show_client_config() {
+    echo -e "${CYAN}📱 V2Ray 客户端配置${NC}"
+    echo ""
+    
+    if [ ! -f "$V2RAY_CONFIG_DIR/config.json" ]; then
+        echo -e "${RED}❌ V2Ray 未安装或配置文件不存在${NC}"
+        echo -e "${YELLOW}💡 请先安装 V2Ray: 2ray install${NC}"
+        return 1
+    fi
+    
+    # 获取配置信息
+    UUID=$(grep -o '"id": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4 2>/dev/null || echo "未找到")
+    WS_PATH=$(grep -o '"path": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4 2>/dev/null || echo "未找到")
+    
+    # 获取服务器IP地址
+    get_server_ips() {
+        local ipv4=""
+        local ipv6=""
+        
+        # 获取IPv4地址
+        ipv4=$(curl -s -4 --connect-timeout 5 --max-time 10 ifconfig.me 2>/dev/null)
+        if [ -z "$ipv4" ] || ! [[ $ipv4 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            ipv4=$(curl -s -4 --connect-timeout 5 --max-time 10 ipinfo.io/ip 2>/dev/null)
+        fi
+        if [ -z "$ipv4" ] || ! [[ $ipv4 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            ipv4=$(curl -s -4 --connect-timeout 5 --max-time 10 icanhazip.com 2>/dev/null)
+        fi
+        
+        # 获取IPv6地址
+        ipv6=$(curl -s -6 --connect-timeout 5 --max-time 10 ifconfig.me 2>/dev/null)
+        if [ -z "$ipv6" ] || ! [[ $ipv6 =~ ^[0-9a-fA-F:]+$ ]]; then
+            ipv6=$(curl -s -6 --connect-timeout 5 --max-time 10 ipinfo.io/ip 2>/dev/null)
+        fi
+        if [ -z "$ipv6" ] || ! [[ $ipv6 =~ ^[0-9a-fA-F:]+$ ]]; then
+            ipv6=$(curl -s -6 --connect-timeout 5 --max-time 10 icanhazip.com 2>/dev/null)
+        fi
+        
+        echo "$ipv4|$ipv6"
+    }
+    
+    SERVER_IPS=$(get_server_ips)
+    IPV4=$(echo "$SERVER_IPS" | cut -d'|' -f1)
+    IPV6=$(echo "$SERVER_IPS" | cut -d'|' -f2)
+    
+    # 域名配置（用于反代）
+    DOMAIN="2ray.myhost.com"
+    
+    echo -e "${YELLOW}📋 服务器信息:${NC}"
+    if [ -n "$IPV4" ] && [ "$IPV4" != "无法获取" ]; then
+        echo -e "   🌍 IPv4地址: $IPV4"
+    fi
+    if [ -n "$IPV6" ] && [ "$IPV6" != "无法获取" ]; then
+        echo -e "   🌐 IPv6地址: $IPV6"
+    fi
+    echo -e "   🌐 域名: $DOMAIN"
+    echo -e "   🔌 端口: 8080 (原始) / 443 (反代)"
+    echo -e "   📡 协议: WebSocket"
+    echo -e "   🛣️  路径: $WS_PATH"
+    echo -e "   🔑 UUID: $UUID"
+    echo ""
+    
+    # 生成原始配置（使用IP地址）
+    if [ -n "$IPV4" ] && [ "$IPV4" != "无法获取" ]; then
+        echo -e "${GREEN}🌍 IPv4 原始配置:${NC}"
+        VMESS_CONFIG_IPV4=$(cat << EOF
+{
+    "v": "2",
+    "ps": "V2Ray Server (IPv4)",
+    "add": "$IPV4",
+    "port": "8080",
+    "id": "$UUID",
+    "aid": "0",
+    "net": "ws",
+    "type": "none",
+    "host": "",
+    "path": "$WS_PATH",
+    "tls": ""
+}
+EOF
+)
+        VMESS_LINK_IPV4="vmess://$(echo "$VMESS_CONFIG_IPV4" | base64 -w 0)"
+        echo -e "   🔗 $VMESS_LINK_IPV4"
+        echo ""
+    fi
+    
+    # 生成反代配置（使用域名和443端口）
+    echo -e "${BLUE}🌐 域名反代配置 (推荐):${NC}"
+    VMESS_CONFIG_DOMAIN=$(cat << EOF
+{
+    "v": "2",
+    "ps": "V2Ray Server (Domain)",
+    "add": "$DOMAIN",
+    "port": "443",
+    "id": "$UUID",
+    "aid": "0",
+    "net": "ws",
+    "type": "none",
+    "host": "",
+    "path": "$WS_PATH",
+    "tls": ""
+}
+EOF
+)
+    VMESS_LINK_DOMAIN="vmess://$(echo "$VMESS_CONFIG_DOMAIN" | base64 -w 0)"
+    echo -e "   🔗 $VMESS_LINK_DOMAIN"
+    echo ""
+    
+    # IPv6 配置（如果可用）
+    if [ -n "$IPV6" ] && [ "$IPV6" != "无法获取" ]; then
+        echo -e "${CYAN}🌐 IPv6 原始配置:${NC}"
+        VMESS_CONFIG_IPV6=$(cat << EOF
+{
+    "v": "2",
+    "ps": "V2Ray Server (IPv6)",
+    "add": "$IPV6",
+    "port": "8080",
+    "id": "$UUID",
+    "aid": "0",
+    "net": "ws",
+    "type": "none",
+    "host": "",
+    "path": "$WS_PATH",
+    "tls": ""
+}
+EOF
+)
+        VMESS_LINK_IPV6="vmess://$(echo "$VMESS_CONFIG_IPV6" | base64 -w 0)"
+        echo -e "   🔗 $VMESS_LINK_IPV6"
+        echo ""
+    fi
+    
+    echo -e "${YELLOW}📋 配置说明:${NC}"
+    echo -e "   🌐 域名反代配置: 使用 nginx 反向代理，端口 443，更稳定"
+    echo -e "   🌍 IPv4 原始配置: 直接连接服务器 IP，端口 8080"
+    echo -e "   🌐 IPv6 原始配置: 直接连接服务器 IPv6，端口 8080"
+    echo ""
+    echo -e "${CYAN}💡 使用建议:${NC}"
+    echo -e "   🎯 推荐使用域名反代配置，更稳定且支持 CDN"
+    echo -e "   🔧 需要配置 nginx 反向代理到 127.0.0.1:8080"
+    echo -e "   📱 复制链接到客户端即可使用"
+    echo ""
+    
+    # 保存配置到文件
+    if [ -d "$V2RAY_INSTALL_DIR" ]; then
+        cat > "$V2RAY_INSTALL_DIR/client-configs.txt" << EOF
+==========================================
+📱 V2Ray 客户端配置
+==========================================
+
+📋 服务器信息:
+   🌍 IPv4地址: $IPV4
+   🌐 IPv6地址: $IPV6
+   🌐 域名: $DOMAIN
+   🔌 端口: 8080 (原始) / 443 (反代)
+   📡 协议: WebSocket
+   🛣️  路径: $WS_PATH
+   🔑 UUID: $UUID
+
+🌐 域名反代配置 (推荐):
+$VMESS_LINK_DOMAIN
+
+🌍 IPv4 原始配置:
+$VMESS_LINK_IPV4
+
+EOF
+        if [ -n "$IPV6" ] && [ "$IPV6" != "无法获取" ]; then
+            cat >> "$V2RAY_INSTALL_DIR/client-configs.txt" << EOF
+🌐 IPv6 原始配置:
+$VMESS_LINK_IPV6
+
+EOF
+        fi
+        cat >> "$V2RAY_INSTALL_DIR/client-configs.txt" << EOF
+📋 配置说明:
+   🌐 域名反代配置: 使用 nginx 反向代理，端口 443，更稳定
+   🌍 IPv4 原始配置: 直接连接服务器 IP，端口 8080
+   🌐 IPv6 原始配置: 直接连接服务器 IPv6，端口 8080
+
+💡 使用建议:
+   🎯 推荐使用域名反代配置，更稳定且支持 CDN
+   🔧 需要配置 nginx 反向代理到 127.0.0.1:8080
+   📱 复制链接到客户端即可使用
+
+==========================================
+EOF
+        echo -e "${GREEN}✅ 配置已保存到: $V2RAY_INSTALL_DIR/client-configs.txt${NC}"
+    fi
+    echo ""
+}
+
 # 显示信息
 show_info() {
     echo -e "${CYAN}ℹ️  V2Ray 信息${NC}"
@@ -1122,6 +1337,7 @@ show_menu() {
     echo -e "  ${PURPLE}13${NC} 🔄 重新加载配置"
     echo -e "  ${CYAN}14${NC} 📦 检查更新状态"
     echo -e "  ${PURPLE}15${NC} 🔄 更新 V2Ray 内核"
+    echo -e "  ${GREEN}17${NC} 📱 查看客户端配置"
     echo -e "  ${BLUE}16${NC} ❓ 显示帮助"
     echo -e "  ${RED}0${NC} 🚪 退出程序"
     echo ""
@@ -1218,6 +1434,11 @@ handle_menu_choice() {
             echo -e "${CYAN}🎯 选择: 显示帮助${NC}"
             echo ""
             show_help
+            ;;
+        17)
+            echo -e "${CYAN}🎯 选择: 查看客户端配置${NC}"
+            echo ""
+            show_client_config
             ;;
         0)
             echo -e "${GREEN}👋 感谢使用 V2Ray 管理脚本！${NC}"
@@ -1326,6 +1547,9 @@ main() {
             ;;
         check-update)
             check_update
+            ;;
+        client-config|config-client)
+            show_client_config
             ;;
         menu)
             interactive_menu

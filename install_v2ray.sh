@@ -57,6 +57,19 @@ echo ""
 echo -e "${CYAN}📁 安装到系统目录...${NC}"
 cp /tmp/${SCRIPT_NAME} /usr/local/bin/
 echo -e "${GREEN}✅ 安装完成: /usr/local/bin/${SCRIPT_NAME}${NC}"
+
+# 创建 2ray 命令别名
+echo -e "${CYAN}🔗 创建 2ray 命令别名...${NC}"
+cat > /usr/local/bin/2ray << 'EOF'
+#!/bin/bash
+# V2Ray 管理命令别名
+# 使用 2ray 命令快速管理 V2Ray
+
+exec /usr/local/bin/v2ray_manager.sh "$@"
+EOF
+
+chmod +x /usr/local/bin/2ray
+echo -e "${GREEN}✅ 2ray 命令创建完成${NC}"
 echo ""
 
 # 清理临时文件
@@ -68,11 +81,11 @@ echo ""
 echo -e "${GREEN}🎉 V2Ray 管理脚本安装完成！${NC}"
 echo ""
 echo -e "${YELLOW}📋 使用方法:${NC}"
-echo -e "  🎮 交互式菜单: ${GREEN}${SCRIPT_NAME}${NC}"
-echo -e "  📦 安装 V2Ray: ${GREEN}${SCRIPT_NAME} install${NC}"
-echo -e "  ❓ 查看帮助: ${GREEN}${SCRIPT_NAME} help${NC}"
+echo -e "  🎮 交互式菜单: ${GREEN}2ray${NC} 或 ${GREEN}${SCRIPT_NAME}${NC}"
+echo -e "  📦 安装 V2Ray: ${GREEN}2ray install${NC} 或 ${GREEN}${SCRIPT_NAME} install${NC}"
+echo -e "  ❓ 查看帮助: ${GREEN}2ray help${NC} 或 ${GREEN}${SCRIPT_NAME} help${NC}"
 echo ""
-echo -e "${CYAN}💡 建议先运行: ${SCRIPT_NAME} help${NC}"
+echo -e "${CYAN}💡 建议先运行: 2ray help${NC}"
 echo ""
 
 # 询问是否立即安装 V2Ray
