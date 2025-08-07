@@ -1084,7 +1084,7 @@ EOF
         echo ""
     fi
     
-    # 生成反代配置（使用域名和443端口）
+    # 生成反代配置（使用域名和443端口，带TLS）
     echo -e "${BLUE}🌐 域名反代配置 (推荐):${NC}"
     VMESS_CONFIG_DOMAIN=$(cat << EOF
 {
@@ -1096,9 +1096,10 @@ EOF
     "aid": "0",
     "net": "ws",
     "type": "none",
-    "host": "",
+    "host": "$DOMAIN",
     "path": "$WS_PATH",
-    "tls": ""
+    "tls": "tls",
+    "sni": "$DOMAIN"
 }
 EOF
 )
@@ -1131,13 +1132,14 @@ EOF
     fi
     
     echo -e "${YELLOW}📋 配置说明:${NC}"
-    echo -e "   🌐 域名反代配置: 使用 nginx 反向代理，端口 443，更稳定"
+    echo -e "   🌐 域名反代配置: 使用 nginx 反向代理，端口 443，TLS 加密，更稳定"
     echo -e "   🌍 IPv4 原始配置: 直接连接服务器 IP，端口 8080"
     echo -e "   🌐 IPv6 原始配置: 直接连接服务器 IPv6，端口 8080"
     echo ""
     echo -e "${CYAN}💡 使用建议:${NC}"
-    echo -e "   🎯 推荐使用域名反代配置，更稳定且支持 CDN"
+    echo -e "   🎯 推荐使用域名反代配置，TLS 加密更安全，支持 CDN"
     echo -e "   🔧 需要配置 nginx 反向代理到 127.0.0.1:8080"
+    echo -e "   🔐 需要为域名配置 SSL 证书"
     echo -e "   📱 复制链接到客户端即可使用"
     echo ""
     
@@ -1173,13 +1175,14 @@ EOF
         fi
         cat >> "$V2RAY_INSTALL_DIR/client-configs.txt" << EOF
 📋 配置说明:
-   🌐 域名反代配置: 使用 nginx 反向代理，端口 443，更稳定
+   🌐 域名反代配置: 使用 nginx 反向代理，端口 443，TLS 加密，更稳定
    🌍 IPv4 原始配置: 直接连接服务器 IP，端口 8080
    🌐 IPv6 原始配置: 直接连接服务器 IPv6，端口 8080
 
 💡 使用建议:
-   🎯 推荐使用域名反代配置，更稳定且支持 CDN
+   🎯 推荐使用域名反代配置，TLS 加密更安全，支持 CDN
    🔧 需要配置 nginx 反向代理到 127.0.0.1:8080
+   🔐 需要为域名配置 SSL 证书
    📱 复制链接到客户端即可使用
 
 ==========================================
