@@ -12,6 +12,7 @@
 - 📊 **状态监控**: 实时查看服务状态和日志
 - 🛡️ **安全设计**: 使用 nobody 用户运行，提高安全性
 - 📁 **标准目录**: 使用系统标准目录结构
+- 🔄 **自动更新**: 支持检查和更新 V2Ray 内核
 
 ## 📋 系统要求
 
@@ -26,14 +27,14 @@
 
 ```bash
 # 下载并运行一键安装脚本
-curl -L https://raw.githubusercontent.com/your-repo/v2ray_manager.sh/main/install_v2ray.sh | bash
+curl -L https://raw.githubusercontent.com/JarvanDing/myss/main/install_v2ray.sh | bash
 ```
 
 ### 手动安装
 
 ```bash
 # 1. 下载管理脚本
-wget https://raw.githubusercontent.com/your-repo/v2ray_manager.sh/main/v2ray_manager.sh
+wget https://raw.githubusercontent.com/JarvanDing/myss/main/v2ray_manager.sh
 
 # 2. 设置执行权限
 chmod +x v2ray_manager.sh
@@ -95,6 +96,12 @@ v2ray_manager.sh logs
 
 # 查看配置信息
 v2ray_manager.sh info
+
+# 检查更新状态
+v2ray_manager.sh check-update
+
+# 更新 V2Ray 内核
+v2ray_manager.sh update
 
 # 卸载 V2Ray
 v2ray_manager.sh uninstall
@@ -166,6 +173,22 @@ v2ray_manager.sh reload
 v2ray_manager.sh check
 ```
 
+## 🔄 更新功能
+
+### 检查更新
+
+```bash
+# 检查 V2Ray 更新状态
+v2ray_manager.sh check-update
+```
+
+### 更新内核
+
+```bash
+# 更新 V2Ray 内核到最新版本
+v2ray_manager.sh update
+```
+
 ## 🐛 故障排除
 
 ### 常见问题
@@ -204,11 +227,11 @@ v2ray_manager.sh check
 ### 更新 V2Ray
 
 ```bash
-# 卸载旧版本
-v2ray_manager.sh uninstall
+# 检查更新状态
+v2ray_manager.sh check-update
 
-# 安装新版本
-v2ray_manager.sh install
+# 更新到最新版本
+v2ray_manager.sh update
 ```
 
 ### 完全卸载
@@ -220,7 +243,7 @@ v2ray_manager.sh uninstall
 
 ## 📝 许可证
 
-本项目采用 MIT 许可证，详见 [LICENSE](LICENSE) 文件。
+本项目采用 MIT 许可证。
 
 ## 🤝 贡献
 
@@ -230,7 +253,7 @@ v2ray_manager.sh uninstall
 
 如果您遇到问题或有建议，请：
 
-1. 查看 [Issues](../../issues) 页面
+1. 查看 [Issues](https://github.com/JarvanDing/myss/issues) 页面
 2. 提交新的 Issue
 3. 联系维护者
 

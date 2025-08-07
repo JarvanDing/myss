@@ -50,6 +50,8 @@ show_help() {
     echo -e "  ${PURPLE}reload${NC}      🔄 重新加载配置"
     echo -e "  ${CYAN}check${NC}        🔍 检查安装状态"
     echo -e "  ${GREEN}info${NC}        ℹ️  显示信息"
+    echo -e "  ${PURPLE}update${NC}      🔄 更新 V2Ray 内核"
+    echo -e "  ${CYAN}check-update${NC}  📦 检查更新状态"
     echo -e "  ${BLUE}help${NC}         ❓ 显示帮助"
     echo ""
     echo -e "${YELLOW}💡 使用建议:${NC}"
@@ -61,6 +63,8 @@ show_help() {
     echo "  $0              # 启动交互式菜单"
     echo "  $0 install      # 安装 V2Ray"
     echo "  $0 status       # 查看服务状态"
+    echo "  $0 update       # 更新 V2Ray 内核"
+    echo "  $0 check-update # 检查更新状态"
     echo "  $0 logs         # 查看日志"
     echo "  $0 uninstall    # 卸载 V2Ray"
     echo ""
@@ -164,6 +168,216 @@ download_v2ray() {
     
     rm -rf /tmp/v2ray v2ray.zip
     echo -e "${GREEN}✅ V2Ray 二进制文件安装完成${NC}"
+    echo ""
+}
+
+# 获取最新版本
+get_latest_version() {
+    # 尝试从GitHub API获取最新版本
+    LATEST_VERSION=$(curl -s https://api.github.com/repos/v2fly/v2ray-core/releases/latest | grep -o '"tag_name": "v[^"]*"' | cut -d'"' -f4 2>/dev/null)
+    
+    if [ -z "$LATEST_VERSION" ]; then
+        # 备用方法：从GitHub页面获取
+        LATEST_VERSION=$(curl -s https://github.com/v2fly/v2ray-core/releases | grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' | head -n1 2>/dev/null)
+    fi
+    
+    if [ -n "$LATEST_VERSION" ]; then
+        echo "$LATEST_VERSION"
+    else
+        echo ""
+    fi
+}
+
+# 更新V2Ray内核
+update_v2ray() {
+    echo -e "${CYAN}🔄 开始更新 V2Ray 内核...${NC}"
+    echo ""
+    
+    # 检查是否已安装
+    if [ ! -f "/usr/local/bin/v2ray" ]; then
+        echo -e "${RED}❌ V2Ray 未安装，请先安装 V2Ray${NC}"
+        exit 1
+    fi
+    
+    # 获取系统架构
+    if command -v uname >/dev/null 2>&1; then
+        ARCH=$(uname -m)
+    else
+        # 尝试从其他方式获取架构信息
+        if [ -f /proc/cpuinfo ]; then
+            # 简单的架构检测
+            if grep -q "aarch64\|arm64" /proc/cpuinfo 2>/dev/null; then
+                ARCH="aarch64"
+            elif grep -q "armv7" /proc/cpuinfo 2>/dev/null; then
+                ARCH="armv7l"
+            elif grep -q "x86_64\|amd64" /proc/cpuinfo 2>/dev/null; then
+                ARCH="x86_64"
+            else
+                ARCH="x86_64"  # 默认假设为 x86_64
+            fi
+        else
+            ARCH="x86_64"  # 默认假设为 x86_64
+        fi
+    fi
+    
+    # 获取当前版本
+    CURRENT_VERSION=$(/usr/local/bin/v2ray version 2>/dev/null | head -n1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -n1 | sed 's/^/v/' || echo "未知")
+    echo -e "${CYAN}📋 当前版本: $CURRENT_VERSION${NC}"
+    
+    # 获取最新版本
+    echo -e "${CYAN}🔍 检查最新版本...${NC}"
+    LATEST_VERSION=$(get_latest_version)
+    
+    if [ -z "$LATEST_VERSION" ]; then
+        echo -e "${RED}❌ 无法获取最新版本信息${NC}"
+        exit 1
+    fi
+    
+    echo -e "${GREEN}✅ 最新版本: $LATEST_VERSION${NC}"
+    
+    # 比较版本
+    if [ "$CURRENT_VERSION" = "$LATEST_VERSION" ]; then
+        echo -e "${GREEN}✅ 当前已是最新版本${NC}"
+        exit 0
+    fi
+    
+    echo -e "${YELLOW}📦 发现新版本: $LATEST_VERSION${NC}"
+    echo -e "${YELLOW}⚠️  当前版本: $CURRENT_VERSION${NC}"
+    
+    # 确认更新
+    read -p "🤔 确定要更新到 $LATEST_VERSION 吗？(y/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo -e "${BLUE}✅ 取消更新${NC}"
+        exit 0
+    fi
+    
+    # 备份当前版本
+    echo -e "${CYAN}💾 备份当前版本...${NC}"
+    cp /usr/local/bin/v2ray /usr/local/bin/v2ray.backup 2>/dev/null || true
+    echo -e "${GREEN}✅ 备份完成${NC}"
+    
+    # 停止服务
+    echo -e "${CYAN}🛑 停止 V2Ray 服务...${NC}"
+    if systemctl is-active --quiet "$SERVICE_NAME"; then
+        systemctl stop "$SERVICE_NAME"
+        echo -e "${GREEN}✅ 服务已停止${NC}"
+    fi
+    
+    # 下载新版本
+    echo -e "${CYAN}📥 下载新版本...${NC}"
+    TEMP_VERSION="$V2RAY_VERSION"
+    V2RAY_VERSION="$LATEST_VERSION"
+    
+    case $ARCH in
+        "x86_64")
+            V2RAY_URL="https://github.com/v2fly/v2ray-core/releases/download/${V2RAY_VERSION}/v2ray-linux-64.zip"
+            ;;
+        "aarch64"|"arm64")
+            V2RAY_URL="https://github.com/v2fly/v2ray-core/releases/download/${V2RAY_VERSION}/v2ray-linux-arm64-v8a.zip"
+            ;;
+        "armv7l")
+            V2RAY_URL="https://github.com/v2fly/v2ray-core/releases/download/${V2RAY_VERSION}/v2ray-linux-arm32-v7a.zip"
+            ;;
+        *)
+            echo -e "${RED}❌ 不支持的架构: ${ARCH}${NC}"
+            exit 1
+            ;;
+    esac
+    
+    if curl -L -o v2ray.zip "$V2RAY_URL"; then
+        echo -e "${GREEN}✅ 下载完成${NC}"
+    else
+        echo -e "${RED}❌ 下载失败${NC}"
+        # 恢复原版本
+        systemctl start "$SERVICE_NAME" 2>/dev/null || true
+        exit 1
+    fi
+    
+    if unzip -o v2ray.zip -d /tmp/v2ray &> /dev/null; then
+        echo -e "${GREEN}✅ 解压完成${NC}"
+    else
+        echo -e "${RED}❌ 解压失败${NC}"
+        # 恢复原版本
+        systemctl start "$SERVICE_NAME" 2>/dev/null || true
+        exit 1
+    fi
+    
+    # 替换二进制文件
+    cp /tmp/v2ray/v2ray /usr/local/bin/
+    chmod +x /usr/local/bin/v2ray
+    
+    # 清理临时文件
+    rm -rf /tmp/v2ray v2ray.zip
+    
+    # 启动服务
+    echo -e "${CYAN}▶️  启动 V2Ray 服务...${NC}"
+    systemctl start "$SERVICE_NAME"
+    
+    if systemctl is-active --quiet "$SERVICE_NAME"; then
+        echo -e "${GREEN}✅ V2Ray 服务启动成功${NC}"
+        
+        # 验证新版本
+        NEW_VERSION=$(/usr/local/bin/v2ray version 2>/dev/null | head -n1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -n1 | sed 's/^/v/' || echo "未知")
+        echo -e "${GREEN}🎉 更新成功！新版本: $NEW_VERSION${NC}"
+        
+        # 删除备份文件
+        rm -f /usr/local/bin/v2ray.backup
+        echo -e "${GREEN}✅ 备份文件已清理${NC}"
+    else
+        echo -e "${RED}❌ V2Ray 服务启动失败${NC}"
+        echo -e "${YELLOW}🔄 正在恢复原版本...${NC}"
+        
+        # 恢复原版本
+        cp /usr/local/bin/v2ray.backup /usr/local/bin/v2ray 2>/dev/null || true
+        systemctl start "$SERVICE_NAME"
+        
+        if systemctl is-active --quiet "$SERVICE_NAME"; then
+            echo -e "${GREEN}✅ 原版本恢复成功${NC}"
+        else
+            echo -e "${RED}❌ 原版本恢复失败，请手动检查${NC}"
+        fi
+        exit 1
+    fi
+    
+    # 恢复版本变量
+    V2RAY_VERSION="$TEMP_VERSION"
+    echo ""
+}
+
+# 检查更新状态
+check_update() {
+    echo -e "${CYAN}🔍 检查 V2Ray 更新状态${NC}"
+    echo ""
+    
+    # 检查是否已安装
+    if [ ! -f "/usr/local/bin/v2ray" ]; then
+        echo -e "${RED}❌ V2Ray 未安装${NC}"
+        exit 1
+    fi
+    
+    # 获取当前版本
+    CURRENT_VERSION=$(/usr/local/bin/v2ray version 2>/dev/null | head -n1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -n1 | sed 's/^/v/' || echo "未知")
+    echo -e "${CYAN}📋 当前版本: $CURRENT_VERSION${NC}"
+    
+    # 获取最新版本
+    echo -e "${CYAN}🔍 检查最新版本...${NC}"
+    LATEST_VERSION=$(get_latest_version)
+    
+    if [ -z "$LATEST_VERSION" ]; then
+        echo -e "${YELLOW}⚠️  无法获取最新版本信息${NC}"
+        exit 1
+    fi
+    
+    echo -e "${GREEN}✅ 最新版本: $LATEST_VERSION${NC}"
+    
+    # 比较版本
+    if [ "$CURRENT_VERSION" = "$LATEST_VERSION" ]; then
+        echo -e "${GREEN}✅ 当前已是最新版本${NC}"
+    else
+        echo -e "${YELLOW}📦 发现新版本: $LATEST_VERSION${NC}"
+        echo -e "${BLUE}💡 运行 '$0 update' 进行更新${NC}"
+    fi
     echo ""
 }
 
@@ -363,13 +577,13 @@ EOF
 EOF
     
     if [ -n "$CONFIG_IPV4" ] && [ "$CONFIG_IPV4" != "无法获取" ]; then
-        cat >> "$V2RAY_DIR/v2ray-config.txt" << EOF
+        cat >> "$V2RAY_INSTALL_DIR/v2ray-config.txt" << EOF
    🌍 IPv4地址: $CONFIG_IPV4
 EOF
     fi
     
     if [ -n "$CONFIG_IPV6" ] && [ "$CONFIG_IPV6" != "无法获取" ]; then
-        cat >> "$V2RAY_DIR/v2ray-config.txt" << EOF
+        cat >> "$V2RAY_INSTALL_DIR/v2ray-config.txt" << EOF
    🌐 IPv6地址: $CONFIG_IPV6
 EOF
     fi
@@ -400,18 +614,18 @@ EOF
 EOF
     
     if [ -n "$CONFIG_IPV4" ] && [ "$CONFIG_IPV4" != "无法获取" ]; then
-        cat >> "$V2RAY_DIR/v2ray-config.txt" << EOF
+        cat >> "$V2RAY_INSTALL_DIR/v2ray-config.txt" << EOF
    📡 源站IPv4: $CONFIG_IPV4:8080
 EOF
     fi
     
     if [ -n "$CONFIG_IPV6" ] && [ "$CONFIG_IPV6" != "无法获取" ]; then
-        cat >> "$V2RAY_DIR/v2ray-config.txt" << EOF
+        cat >> "$V2RAY_INSTALL_DIR/v2ray-config.txt" << EOF
    📡 源站IPv6: [$CONFIG_IPV6]:8080
 EOF
     fi
     
-    cat >> "$V2RAY_DIR/v2ray-config.txt" << EOF
+    cat >> "$V2RAY_INSTALL_DIR/v2ray-config.txt" << EOF
    🌍 域名: soni.muoai.com
    🔄 缓存策略: CachingDisabled
    📋 源请求策略: Managed-AllViewer
@@ -906,7 +1120,9 @@ show_menu() {
     echo -e "  ${GREEN}11${NC} ℹ️  显示详细信息"
     echo -e "  ${YELLOW}12${NC} ⚙️  查看配置"
     echo -e "  ${PURPLE}13${NC} 🔄 重新加载配置"
-    echo -e "  ${BLUE}14${NC} ❓ 显示帮助"
+    echo -e "  ${CYAN}14${NC} 📦 检查更新状态"
+    echo -e "  ${PURPLE}15${NC} 🔄 更新 V2Ray 内核"
+    echo -e "  ${BLUE}16${NC} ❓ 显示帮助"
     echo -e "  ${RED}0${NC} 🚪 退出程序"
     echo ""
 }
@@ -988,6 +1204,17 @@ handle_menu_choice() {
             reload_config
             ;;
         14)
+            echo -e "${CYAN}🎯 选择: 检查更新状态${NC}"
+            echo ""
+            check_update
+            ;;
+        15)
+            echo -e "${CYAN}🎯 选择: 更新 V2Ray 内核${NC}"
+            echo ""
+            check_root
+            update_v2ray
+            ;;
+        16)
             echo -e "${CYAN}🎯 选择: 显示帮助${NC}"
             echo ""
             show_help
@@ -999,7 +1226,7 @@ handle_menu_choice() {
             ;;
         *)
             echo -e "${RED}❌ 无效选择: $choice${NC}"
-            echo -e "${YELLOW}💡 请输入 0-14 之间的数字${NC}"
+            echo -e "${YELLOW}💡 请输入 0-16 之间的数字${NC}"
             ;;
     esac
 }
@@ -1009,7 +1236,7 @@ interactive_menu() {
     while true; do
         show_menu
         
-        echo -e "${YELLOW}请输入选项编号 (0-14):${NC} "
+        echo -e "${YELLOW}请输入选项编号 (0-16):${NC} "
         read -p "> " choice
         
         # 检查输入是否为空
@@ -1092,6 +1319,13 @@ main() {
             ;;
         info)
             show_info
+            ;;
+        update)
+            check_root
+            update_v2ray
+            ;;
+        check-update)
+            check_update
             ;;
         menu)
             interactive_menu
