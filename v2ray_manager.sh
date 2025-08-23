@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# V2Ray 管理脚本 - 一站式管理工具
+# V2Ray 管理脚本 v2.0.0
 # 支持安装、卸载、服务管理、状态检查等功能
 
 set -e
@@ -16,64 +16,92 @@ NC='\033[0m'
 
 # 配置变量
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# 标准系统目录 - 适用于所有Linux发行版
 V2RAY_INSTALL_DIR="/usr/local/v2ray"
 V2RAY_CONFIG_DIR="/etc/v2ray"
 V2RAY_LOG_DIR="/var/log/v2ray"
 V2RAY_BIN_DIR="/usr/local/bin"
 SERVICE_NAME="v2ray"
-V2RAY_VERSION="v5.7.0"
+V2RAY_VERSION="v5.37.0"
 
 # 显示帮助信息
 show_help() {
-    echo -e "${CYAN}🚀 V2Ray 管理脚本 - 一站式管理工具${NC}"
+    echo -e "${CYAN}🚀 V2Ray 管理脚本 v2.0.0${NC}"
     echo ""
     echo -e "${YELLOW}📋 使用方法:${NC}"
-    echo "  $0                    # 启动交互式菜单"
-    echo "  $0 [命令] [选项]      # 命令行模式"
-    echo ""
-    echo -e "${YELLOW}🎮 交互式菜单:${NC}"
-    echo -e "  ${GREEN}直接运行脚本${NC}  🎯 启动交互式菜单，通过数字选择功能"
-    echo -e "  ${BLUE}menu${NC}          🎮 启动交互式菜单"
+    echo "  $0              # 启动交互式菜单"
+    echo "  $0 [命令]       # 命令行模式"
     echo ""
     echo -e "${YELLOW}🔧 命令行模式:${NC}"
-    echo -e "  ${GREEN}install${NC}        📦 安装 V2Ray"
-    echo -e "  ${RED}uninstall${NC}      🗑️  卸载 V2Ray"
-    echo -e "  ${BLUE}start${NC}          ▶️  启动服务"
-    echo -e "  ${YELLOW}stop${NC}           ⏹️  停止服务"
-    echo -e "  ${PURPLE}restart${NC}        🔄 重启服务"
-    echo -e "  ${CYAN}status${NC}          📊 查看状态"
-    echo -e "  ${GREEN}logs${NC}           📝 查看日志"
-    echo -e "  ${BLUE}enable${NC}          ✅ 启用开机自启"
-    echo -e "  ${RED}disable${NC}         ❌ 禁用开机自启"
-    echo -e "  ${YELLOW}config${NC}         ⚙️  查看配置"
-    echo -e "  ${PURPLE}reload${NC}         🔄 重新加载配置"
-    echo -e "  ${CYAN}check${NC}           🔍 检查安装状态"
-    echo -e "  ${GREEN}info${NC}           ℹ️  显示信息"
-    echo -e "  ${PURPLE}update${NC}         🔄 更新 V2Ray 内核"
-    echo -e "  ${CYAN}check-update${NC}    📦 检查更新状态"
-    echo -e "  ${GREEN}client-config${NC}         📱 查看客户端配置"
-    echo -e "  ${BLUE}switch-protocol${NC}       🔄 切换协议 (解决兼容性问题)"
-    echo -e "  ${PURPLE}diagnose-client-config${NC} 🔍 客户端配置诊断"
-    echo -e "  ${BLUE}help${NC}                  ❓ 显示帮助"
-    echo ""
-    echo -e "${YELLOW}💡 使用建议:${NC}"
-    echo -e "  🎮 新手用户: 直接运行 $0 使用交互式菜单"
-    echo -e "  ⚡ 高级用户: 使用命令行模式 $0 [命令]"
-    echo -e "  🔄 如果客户端无法使用，请运行: $0 switch-protocol"
-    echo -e "  📖 查看帮助: $0 help"
+    echo -e "  ${GREEN}install${NC}      📦 安装 V2Ray (默认开机启动)"
+    echo -e "  ${RED}uninstall${NC}    🗑️  卸载 V2Ray"
+    echo -e "  ${BLUE}start${NC}        ▶️  启动服务"
+    echo -e "  ${YELLOW}stop${NC}         ⏹️  停止服务"
+    echo -e "  ${PURPLE}restart${NC}      🔄 重启服务"
+    echo -e "  ${CYAN}status${NC}        📊 查看状态"
+    echo -e "  ${GREEN}logs${NC}         📝 查看日志"
+    echo -e "  ${CYAN}config${NC}       📱 查看客户端配置"
+    echo -e "  ${PURPLE}update${NC}       🔄 更新 V2Ray 内核"
+    echo -e "  ${BLUE}info${NC}         ℹ️  显示信息"
+    echo -e "  ${BLUE}version${NC}      🔢 显示版本"
+    echo -e "  ${BLUE}help${NC}         ❓ 显示帮助"
     echo ""
     echo -e "${YELLOW}🎯 示例:${NC}"
-    echo "  $0                   # 启动交互式菜单"
-    echo "  $0 install           # 安装 V2Ray"
-    echo "  $0 status            # 查看服务状态"
-    echo "  $0 switch-protocol   # 切换协议解决兼容性问题"
-    echo "  $0 update            # 更新 V2Ray 内核"
-    echo "  $0 check-update      # 检查更新状态"
-    echo "  $0 client-config     # 查看客户端配置"
-    echo "  $0 logs              # 查看日志"
-    echo "  $0 uninstall         # 卸载 V2Ray"
+    echo "  $0             # 启动交互式菜单"
+    echo "  $0 install     # 安装 V2Ray"
+    echo "  $0 status      # 查看服务状态"
+    echo "  $0 config      # 查看客户端配置"
+    echo "  $0 logs        # 查看日志"
+    echo "  $0 version     # 查看版本"
     echo ""
+}
+
+# 检查必要的依赖工具
+check_dependencies() {
+    echo -e "${CYAN}🔍 检查系统依赖...${NC}"
+    
+    local missing_deps=()
+    
+    # 检查必要的命令
+    if ! command -v curl >/dev/null 2>&1; then
+        missing_deps+=("curl")
+    fi
+    
+    if ! command -v unzip >/dev/null 2>&1; then
+        missing_deps+=("unzip")
+    fi
+    
+    if ! command -v systemctl >/dev/null 2>&1; then
+        missing_deps+=("systemctl")
+    fi
+    
+    # 如果有缺失的依赖，提示安装
+    if [ ${#missing_deps[@]} -gt 0 ]; then
+        echo -e "${YELLOW}⚠️  检测到缺失的依赖工具: ${missing_deps[*]}${NC}"
+        echo -e "${YELLOW}💡 请先安装这些工具:${NC}"
+        
+        if command -v apt-get >/dev/null 2>&1; then
+            echo -e "   📦 Debian/Ubuntu: sudo apt-get update && sudo apt-get install ${missing_deps[*]}"
+        elif command -v yum >/dev/null 2>&1; then
+            echo -e "   📦 CentOS/RHEL: sudo yum install ${missing_deps[*]}"
+        elif command -v dnf >/dev/null 2>&1; then
+            echo -e "   📦 Fedora: sudo dnf install ${missing_deps[*]}"
+        else
+            echo -e "   📦 请使用您的包管理器安装: ${missing_deps[*]}"
+        fi
+        
+        echo ""
+        read -p "🤔 是否继续安装？(y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo -e "${BLUE}✅ 安装已取消${NC}"
+            exit 0
+        fi
+        echo -e "${YELLOW}⚠️  继续安装，但可能会遇到问题${NC}"
+        echo ""
+    else
+        echo -e "${GREEN}✅ 所有依赖工具已就绪${NC}"
+        echo ""
+    fi
 }
 
 # 检查root权限
@@ -94,13 +122,12 @@ check_system() {
         echo -e "${GREEN}✅ 操作系统: ${NAME} ${VERSION}${NC}"
     fi
     
-    # 获取系统架构，兼容没有 uname 命令的环境
+    # 获取系统架构
     if command -v uname >/dev/null 2>&1; then
         ARCH=$(uname -m)
     else
-        # 尝试从其他方式获取架构信息
+        # 从/proc/cpuinfo获取架构信息
         if [ -f /proc/cpuinfo ]; then
-            # 简单的架构检测
             if grep -q "aarch64\|arm64" /proc/cpuinfo 2>/dev/null; then
                 ARCH="aarch64"
             elif grep -q "armv7" /proc/cpuinfo 2>/dev/null; then
@@ -108,15 +135,15 @@ check_system() {
             elif grep -q "x86_64\|amd64" /proc/cpuinfo 2>/dev/null; then
                 ARCH="x86_64"
             else
-                ARCH="x86_64"  # 默认假设为 x86_64
+                ARCH="x86_64"
             fi
         else
-            ARCH="x86_64"  # 默认假设为 x86_64
+            ARCH="x86_64"
         fi
     fi
     echo -e "${GREEN}✅ 系统架构: ${ARCH}${NC}"
     
-    # 检查网络连接，尝试多种方法
+    # 检查网络连接
     if command -v ping >/dev/null 2>&1 && ping -c 1 8.8.8.8 &> /dev/null; then
         echo -e "${GREEN}✅ 网络连接正常${NC}"
     elif command -v curl >/dev/null 2>&1 && curl -s --connect-timeout 5 http://www.google.com &> /dev/null; then
@@ -164,7 +191,6 @@ download_v2ray() {
     fi
     
     cp /tmp/v2ray/v2ray /usr/local/bin/
-    # v2ctl 在新版本中已被移除，功能集成到 v2ray 主程序中
     if [ -f /tmp/v2ray/v2ctl ]; then
         cp /tmp/v2ray/v2ctl /usr/local/bin/
         chmod +x /usr/local/bin/v2ray /usr/local/bin/v2ctl
@@ -179,11 +205,11 @@ download_v2ray() {
 
 # 获取最新版本
 get_latest_version() {
-    # 尝试从GitHub API获取最新版本
+    # 从GitHub API获取最新版本
     LATEST_VERSION=$(curl -s https://api.github.com/repos/v2fly/v2ray-core/releases/latest | grep -o '"tag_name": "v[^"]*"' | cut -d'"' -f4 2>/dev/null)
     
     if [ -z "$LATEST_VERSION" ]; then
-        # 备用方法：从GitHub页面获取
+        # 从GitHub页面获取
         LATEST_VERSION=$(curl -s https://github.com/v2fly/v2ray-core/releases | grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' | head -n1 2>/dev/null)
     fi
     
@@ -203,27 +229,6 @@ update_v2ray() {
     if [ ! -f "/usr/local/bin/v2ray" ]; then
         echo -e "${RED}❌ V2Ray 未安装，请先安装 V2Ray${NC}"
         exit 1
-    fi
-    
-    # 获取系统架构
-    if command -v uname >/dev/null 2>&1; then
-        ARCH=$(uname -m)
-    else
-        # 尝试从其他方式获取架构信息
-        if [ -f /proc/cpuinfo ]; then
-            # 简单的架构检测
-            if grep -q "aarch64\|arm64" /proc/cpuinfo 2>/dev/null; then
-                ARCH="aarch64"
-            elif grep -q "armv7" /proc/cpuinfo 2>/dev/null; then
-                ARCH="armv7l"
-            elif grep -q "x86_64\|amd64" /proc/cpuinfo 2>/dev/null; then
-                ARCH="x86_64"
-            else
-                ARCH="x86_64"  # 默认假设为 x86_64
-            fi
-        else
-            ARCH="x86_64"  # 默认假设为 x86_64
-        fi
     fi
     
     # 获取当前版本
@@ -313,7 +318,6 @@ update_v2ray() {
     cp /tmp/v2ray/v2ray /usr/local/bin/
     chmod +x /usr/local/bin/v2ray
     
-    # 清理临时文件
     rm -rf /tmp/v2ray v2ray.zip
     
     # 启动服务
@@ -346,7 +350,6 @@ update_v2ray() {
         exit 1
     fi
     
-    # 恢复版本变量
     V2RAY_VERSION="$TEMP_VERSION"
     echo ""
 }
@@ -398,108 +401,9 @@ create_directories() {
     echo ""
 }
 
-# 生成配置文件
+# 生成VLESS配置文件
 generate_config() {
     echo -e "${CYAN}⚙️  生成配置文件...${NC}"
-
-    UUID=$(cat /proc/sys/kernel/random/uuid)
-    # 生成5位随机路径
-    WS_PATH="/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 5 | head -n 1)"
-
-    cat > "$V2RAY_CONFIG_DIR/config.json" << EOF
-{
-    "log": {
-        "loglevel": "warning",
-        "access": "$V2RAY_LOG_DIR/access.log",
-        "error": "$V2RAY_LOG_DIR/error.log"
-    },
-    "inbounds": [
-        {
-            "port": 8080,
-            "protocol": "vmess",
-            "settings": {
-                "clients": [
-                    {
-                        "id": "$UUID",
-                        "alterId": 0
-                    }
-                ]
-            },
-            "streamSettings": {
-                "network": "ws",
-                "wsSettings": {
-                    "path": "$WS_PATH"
-                }
-            }
-        }
-    ],
-    "outbounds": [
-        {
-            "protocol": "freedom",
-            "settings": {}
-        }
-    ]
-}
-EOF
-
-    echo -e "${GREEN}✅ 配置文件生成完成${NC}"
-    echo -e "   🔑 UUID: ${UUID}"
-    echo -e "   🛣️  WebSocket路径: ${WS_PATH}"
-    echo ""
-}
-
-# 生成配置文件（保持设置不变）
-generate_config_with_preserved_settings() {
-    local PRESERVED_UUID="$1"
-    local PRESERVED_WS_PATH="$2"
-
-    echo -e "${CYAN}⚙️  生成VMess配置文件（保持设置）...${NC}"
-
-    cat > "$V2RAY_CONFIG_DIR/config.json" << EOF
-{
-    "log": {
-        "loglevel": "warning",
-        "access": "$V2RAY_LOG_DIR/access.log",
-        "error": "$V2RAY_LOG_DIR/error.log"
-    },
-    "inbounds": [
-        {
-            "port": 8080,
-            "protocol": "vmess",
-            "settings": {
-                "clients": [
-                    {
-                        "id": "$PRESERVED_UUID",
-                        "alterId": 0
-                    }
-                ]
-            },
-            "streamSettings": {
-                "network": "ws",
-                "wsSettings": {
-                    "path": "$PRESERVED_WS_PATH"
-                }
-            }
-        }
-    ],
-    "outbounds": [
-        {
-            "protocol": "freedom",
-            "settings": {}
-        }
-    ]
-}
-EOF
-
-    echo -e "${GREEN}✅ VMess配置文件生成完成${NC}"
-    echo -e "   🔑 UUID: ${PRESERVED_UUID} (保持不变)"
-    echo -e "   🛣️  WebSocket路径: ${PRESERVED_WS_PATH} (保持不变)"
-    echo ""
-}
-
-# 生成VLESS配置文件（更兼容的协议）
-generate_vless_config() {
-    echo -e "${CYAN}⚙️  生成VLESS配置文件（更兼容）...${NC}"
 
     UUID=$(cat /proc/sys/kernel/random/uuid)
     # 生成5位随机路径
@@ -541,245 +445,12 @@ generate_vless_config() {
 }
 EOF
 
-    echo -e "${GREEN}✅ VLESS配置文件生成完成${NC}"
+    echo -e "${GREEN}✅ 配置文件生成完成${NC}"
     echo -e "   🔑 UUID: ${UUID}"
     echo -e "   🛣️  WebSocket路径: ${WS_PATH}"
-    echo -e "   📡 协议: VLESS (更兼容)"
     echo ""
 }
 
-# 生成VLESS配置文件（保持设置不变）
-generate_vless_config_with_preserved_settings() {
-    local PRESERVED_UUID="$1"
-    local PRESERVED_WS_PATH="$2"
-
-    echo -e "${CYAN}⚙️  生成VLESS配置文件（保持设置）...${NC}"
-
-    cat > "$V2RAY_CONFIG_DIR/config.json" << EOF
-{
-    "log": {
-        "loglevel": "warning",
-        "access": "$V2RAY_LOG_DIR/access.log",
-        "error": "$V2RAY_LOG_DIR/error.log"
-    },
-    "inbounds": [
-        {
-            "port": 8080,
-            "protocol": "vless",
-            "settings": {
-                "clients": [
-                    {
-                        "id": "$PRESERVED_UUID"
-                    }
-                ],
-                "decryption": "none"
-            },
-            "streamSettings": {
-                "network": "ws",
-                "wsSettings": {
-                    "path": "$PRESERVED_WS_PATH"
-                }
-            }
-        }
-    ],
-    "outbounds": [
-        {
-            "protocol": "freedom",
-            "settings": {}
-        }
-    ]
-}
-EOF
-
-    echo -e "${GREEN}✅ VLESS配置文件生成完成${NC}"
-    echo -e "   🔑 UUID: ${PRESERVED_UUID} (保持不变)"
-    echo -e "   🛣️  WebSocket路径: ${PRESERVED_WS_PATH} (保持不变)"
-    echo -e "   📡 协议: VLESS (更兼容)"
-    echo ""
-}
-
-# 生成Shadowsocks配置文件（最兼容）
-generate_shadowsocks_config() {
-    echo -e "${CYAN}⚙️  生成Shadowsocks配置文件（最兼容）...${NC}"
-
-    # 生成16位随机密码
-    SS_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
-
-    cat > "$V2RAY_CONFIG_DIR/config.json" << EOF
-{
-    "log": {
-        "loglevel": "warning",
-        "access": "$V2RAY_LOG_DIR/access.log",
-        "error": "$V2RAY_LOG_DIR/error.log"
-    },
-    "inbounds": [
-        {
-            "port": 8080,
-            "protocol": "shadowsocks",
-            "settings": {
-                "method": "aes-256-gcm",
-                "password": "$SS_PASSWORD",
-                "network": "tcp,udp"
-            },
-            "streamSettings": {
-                "network": "ws",
-                "wsSettings": {
-                    "path": "/shadowsocks"
-                }
-            }
-        }
-    ],
-    "outbounds": [
-        {
-            "protocol": "freedom",
-            "settings": {}
-        }
-    ]
-}
-EOF
-
-    echo -e "${GREEN}✅ Shadowsocks配置文件生成完成${NC}"
-    echo -e "   🔐 加密方式: aes-256-gcm"
-    echo -e "   🔑 密码: ${SS_PASSWORD}"
-    echo -e "   🛣️  WebSocket路径: /shadowsocks"
-    echo -e "   📡 协议: Shadowsocks (最佳兼容性)"
-    echo ""
-}
-
-# 生成Shadowsocks配置文件（保持设置不变）
-generate_shadowsocks_config_with_preserved_settings() {
-    local PRESERVED_UUID="$1"
-    local PRESERVED_WS_PATH="$2"
-
-    echo -e "${CYAN}⚙️  生成Shadowsocks配置文件（保持设置）...${NC}"
-
-    # 对于Shadowsocks，我们使用UUID作为密码的一部分，确保一致性
-    SS_PASSWORD="${PRESERVED_UUID:0:16}"
-
-    cat > "$V2RAY_CONFIG_DIR/config.json" << EOF
-{
-    "log": {
-        "loglevel": "warning",
-        "access": "$V2RAY_LOG_DIR/access.log",
-        "error": "$V2RAY_LOG_DIR/error.log"
-    },
-    "inbounds": [
-        {
-            "port": 8080,
-            "protocol": "shadowsocks",
-            "settings": {
-                "method": "aes-256-gcm",
-                "password": "$SS_PASSWORD",
-                "network": "tcp,udp"
-            },
-            "streamSettings": {
-                "network": "ws",
-                "wsSettings": {
-                    "path": "$PRESERVED_WS_PATH"
-                }
-            }
-        }
-    ],
-    "outbounds": [
-        {
-            "protocol": "freedom",
-            "settings": {}
-        }
-    ]
-}
-EOF
-
-    echo -e "${GREEN}✅ Shadowsocks配置文件生成完成${NC}"
-    echo -e "   🔐 加密方式: aes-256-gcm"
-    echo -e "   🔑 密码: ${SS_PASSWORD} (基于UUID生成)"
-    echo -e "   🛣️  WebSocket路径: ${PRESERVED_WS_PATH} (保持不变)"
-    echo -e "   📡 协议: Shadowsocks (最佳兼容性)"
-    echo ""
-}
-
-# 切换协议功能
-switch_protocol() {
-    echo -e "${CYAN}🔄 切换V2Ray协议${NC}"
-    echo ""
-
-    if [ ! -f "/usr/local/bin/v2ray" ]; then
-        echo -e "${RED}❌ V2Ray 未安装，请先安装 V2Ray${NC}"
-        exit 1
-    fi
-
-    # 获取当前配置信息
-    CURRENT_UUID=""
-    CURRENT_WS_PATH=""
-    if [ -f "$V2RAY_CONFIG_DIR/config.json" ]; then
-        CURRENT_UUID=$(grep -o '"id": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4 2>/dev/null || echo "")
-        CURRENT_WS_PATH=$(grep -o '"path": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4 2>/dev/null || echo "")
-    fi
-
-    # 如果没有现有配置，生成新的
-    if [ -z "$CURRENT_UUID" ]; then
-        CURRENT_UUID=$(cat /proc/sys/kernel/random/uuid)
-    fi
-    if [ -z "$CURRENT_WS_PATH" ]; then
-        CURRENT_WS_PATH="/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 5 | head -n 1)"
-    fi
-
-    echo -e "${YELLOW}📋 当前配置信息:${NC}"
-    echo -e "   🔑 UUID: $CURRENT_UUID"
-    echo -e "   🛣️  WebSocket路径: $CURRENT_WS_PATH"
-    echo ""
-
-    echo -e "${YELLOW}📋 请选择要切换的协议:${NC}"
-    echo -e "  ${GREEN}1${NC} 📡 VMess (当前协议)"
-    echo -e "  ${BLUE}2${NC} 🚀 VLESS (推荐，更兼容)"
-    echo -e "  ${PURPLE}3${NC} 🛡️  Shadowsocks (最佳兼容性)"
-    echo -e "  ${RED}0${NC} 🚪 返回"
-    echo ""
-
-    read -p "请选择协议 (0-3): " protocol_choice
-
-    case $protocol_choice in
-        1)
-            echo -e "${CYAN}🎯 选择: 保持VMess协议${NC}"
-            generate_config_with_preserved_settings "$CURRENT_UUID" "$CURRENT_WS_PATH"
-            ;;
-        2)
-            echo -e "${CYAN}🎯 选择: 切换到VLESS协议${NC}"
-            generate_vless_config_with_preserved_settings "$CURRENT_UUID" "$CURRENT_WS_PATH"
-            ;;
-        3)
-            echo -e "${CYAN}🎯 选择: 切换到Shadowsocks协议${NC}"
-            generate_shadowsocks_config_with_preserved_settings "$CURRENT_UUID" "$CURRENT_WS_PATH"
-            ;;
-        0)
-            echo -e "${BLUE}✅ 取消操作${NC}"
-            return
-            ;;
-        *)
-            echo -e "${RED}❌ 无效选择${NC}"
-            return
-            ;;
-    esac
-
-    # 重启服务
-    echo -e "${CYAN}🔄 重启V2Ray服务...${NC}"
-    systemctl restart "$SERVICE_NAME"
-
-    if systemctl is-active --quiet "$SERVICE_NAME"; then
-        echo -e "${GREEN}✅ 服务重启成功${NC}"
-    else
-        echo -e "${RED}❌ 服务重启失败${NC}"
-        systemctl status "$SERVICE_NAME"
-        exit 1
-    fi
-
-    # 生成新的客户端配置
-    generate_client_config
-
-    echo -e "${GREEN}🎉 协议切换完成！${NC}"
-    echo -e "${GREEN}✅ UUID和路径保持不变${NC}"
-    echo -e "${YELLOW}📱 客户端配置无需重新配置${NC}"
-    echo ""
-}
 
 # 创建systemd服务
 create_service() {
@@ -822,67 +493,27 @@ set_permissions() {
 generate_client_config() {
     echo -e "${CYAN}📱 生成客户端配置...${NC}"
 
-    # 检测当前协议类型
-    detect_current_protocol() {
-        if [ ! -f "$V2RAY_CONFIG_DIR/config.json" ]; then
-            echo "vmess"  # 默认协议
-            return
-        fi
-
-        # 使用更精确的grep匹配
-        local protocol=$(grep -o '"protocol": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | head -n1 | cut -d'"' -f4)
-        if [ -z "$protocol" ]; then
-            # 备选方法：查找inbounds下的protocol
-            protocol=$(grep -A 5 '"inbounds"' "$V2RAY_CONFIG_DIR/config.json" | grep -o '"protocol": "[^"]*"' | cut -d'"' -f4)
-        fi
-        echo "$protocol"
-    }
-
-    CURRENT_PROTOCOL=$(detect_current_protocol)
-
-    # 使用改进的IP获取方法
-    get_server_ip_for_config() {
-        # 优先获取IPv4地址用于配置
+    # 获取服务器IP
+    get_server_ip() {
         local ipv4=""
-
-        # 尝试多个服务获取IPv4
-        ipv4=$(curl -s -4 --connect-timeout 5 --max-time 10 ifconfig.me 2>/dev/null)
-        if [ -z "$ipv4" ] || ! [[ $ipv4 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            ipv4=$(curl -s -4 --connect-timeout 5 --max-time 10 ipinfo.io/ip 2>/dev/null)
-        fi
-        if [ -z "$ipv4" ] || ! [[ $ipv4 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            ipv4=$(curl -s -4 --connect-timeout 5 --max-time 10 icanhazip.com 2>/dev/null)
-        fi
-
-        # 如果IPv4获取失败，尝试IPv6
+        ipv4=$(curl -s -4 --connect-timeout 5 ifconfig.me 2>/dev/null || curl -s -4 --connect-timeout 5 ipinfo.io/ip 2>/dev/null)
         if [ -z "$ipv4" ]; then
-            ipv4=$(curl -s -6 --connect-timeout 5 --max-time 10 ifconfig.me 2>/dev/null)
+            ipv4=$(ip route get 8.8.8.8 2>/dev/null | grep -oP 'src \K\S+' 2>/dev/null || echo "127.0.0.1")
         fi
-
-        # 如果还是失败，使用本地IP
-        if [ -z "$ipv4" ]; then
-            ipv4=$(ip route get 8.8.8.8 2>/dev/null | grep -oP 'src \K\S+' 2>/dev/null)
-        fi
-
-        # 最后的备选方案
-        if [ -z "$ipv4" ]; then
-            ipv4="127.0.0.1"
-        fi
-
         echo "$ipv4"
     }
 
-    SERVER_IP=$(get_server_ip_for_config)
+    SERVER_IP=$(get_server_ip)
 
-    # 根据协议类型生成不同配置
-    if [ "$CURRENT_PROTOCOL" = "vmess" ]; then
-        UUID=$(grep -o '"id": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4)
-        WS_PATH=$(grep -o '"path": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4)
+    # 获取配置信息
+    UUID=$(grep -o '"id": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4)
+    WS_PATH=$(grep -o '"path": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4)
 
-        VMESS_CONFIG=$(cat << EOF
+    # 生成VLESS配置
+    VLESS_CONFIG=$(cat << EOF
 {
     "v": "2",
-    "ps": "V2Ray Server (VMess)",
+    "ps": "V2Ray Server",
     "add": "$SERVER_IP",
     "port": "8080",
     "id": "$UUID",
@@ -895,160 +526,81 @@ generate_client_config() {
 }
 EOF
 )
-        CLIENT_LINK="vmess://$(echo "$VMESS_CONFIG" | base64 -w 0)"
-        PROTOCOL_NAME="VMess"
-        LINK_TYPE="VMess链接"
+    CLIENT_LINK="vless://$UUID@$SERVER_IP:8080?encryption=none&security=none&type=ws&host=$SERVER_IP&path=$WS_PATH#V2Ray%20Server"
+    
+    # 生成CDN配置链接
+    CDN_CLIENT_LINK="vless://$UUID@my.host.com:443?encryption=none&security=tls&sni=my.host.com&type=ws&host=my.host.com&path=$WS_PATH#V2Ray%20CDN%20Server"
 
-    elif [ "$CURRENT_PROTOCOL" = "vless" ]; then
-        UUID=$(grep -o '"id": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4)
-        WS_PATH=$(grep -o '"path": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4)
-
-        VLESS_CONFIG=$(cat << EOF
-{
-    "v": "2",
-    "ps": "V2Ray Server (VLESS)",
-    "add": "$SERVER_IP",
-    "port": "8080",
-    "id": "$UUID",
-    "aid": "0",
-    "net": "ws",
-    "type": "none",
-    "host": "",
-    "path": "$WS_PATH",
-    "tls": ""
-}
-EOF
-)
-        CLIENT_LINK="vless://$(echo "$VLESS_CONFIG" | base64 -w 0)"
-        PROTOCOL_NAME="VLESS"
-        LINK_TYPE="VLESS链接"
-
-    elif [ "$CURRENT_PROTOCOL" = "shadowsocks" ]; then
-        METHOD=$(grep -o '"method": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4)
-        PASSWORD=$(grep -o '"password": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4)
-
-        # Shadowsocks链接格式: ss://base64(method:password@host:port)
-        SS_CONFIG="${METHOD}:${PASSWORD}@${SERVER_IP}:8080"
-        CLIENT_LINK="ss://$(echo "$SS_CONFIG" | base64 -w 0)"
-        PROTOCOL_NAME="Shadowsocks"
-        LINK_TYPE="Shadowsocks链接"
-    else
-        echo -e "${RED}❌ 不支持的协议类型: $CURRENT_PROTOCOL${NC}"
-        return 1
-    fi
-
-    # 获取两种IP地址用于配置文件
-    get_ips_for_config() {
-        local ipv4=""
-        local ipv6=""
-
-        # 获取IPv4地址
-        ipv4=$(curl -s -4 --connect-timeout 5 --max-time 10 ifconfig.me 2>/dev/null)
-        if [ -z "$ipv4" ] || ! [[ $ipv4 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            ipv4=$(curl -s -4 --connect-timeout 5 --max-time 10 ipinfo.io/ip 2>/dev/null)
-        fi
-        if [ -z "$ipv4" ] || ! [[ $ipv4 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            ipv4=$(curl -s -4 --connect-timeout 5 --max-time 10 icanhazip.com 2>/dev/null)
-        fi
-
-        # 获取IPv6地址
-        ipv6=$(curl -s -6 --connect-timeout 5 --max-time 10 ifconfig.me 2>/dev/null)
-        if [ -z "$ipv6" ] || ! [[ $ipv6 =~ ^[0-9a-fA-F:]+$ ]]; then
-            ipv6=$(curl -s -6 --connect-timeout 5 --max-time 10 ipinfo.io/ip 2>/dev/null)
-        fi
-        if [ -z "$ipv6" ] || ! [[ $ipv6 =~ ^[0-9a-fA-F:]+$ ]]; then
-            ipv6=$(curl -s -6 --connect-timeout 5 --max-time 10 icanhazip.com 2>/dev/null)
-        fi
-
-        echo "$ipv4|$ipv6"
-    }
-
-    CONFIG_IPS=$(get_ips_for_config)
-    CONFIG_IPV4=$(echo "$CONFIG_IPS" | cut -d'|' -f1)
-    CONFIG_IPV6=$(echo "$CONFIG_IPS" | cut -d'|' -f2)
-
+    # 生成配置文件
     cat > "$V2RAY_INSTALL_DIR/v2ray-config.txt" << EOF
 ==========================================
 🚀 V2Ray 服务器配置信息
 ==========================================
 
 📋 服务器信息:
-EOF
-
-    if [ -n "$CONFIG_IPV4" ] && [ "$CONFIG_IPV4" != "无法获取" ]; then
-        cat >> "$V2RAY_INSTALL_DIR/v2ray-config.txt" << EOF
-   🌍 IPv4地址: $CONFIG_IPV4
-EOF
-    fi
-
-    if [ -n "$CONFIG_IPV6" ] && [ "$CONFIG_IPV6" != "无法获取" ]; then
-        cat >> "$V2RAY_INSTALL_DIR/v2ray-config.txt" << EOF
-   🌐 IPv6地址: $CONFIG_IPV6
-EOF
-    fi
-
-    cat >> "$V2RAY_INSTALL_DIR/v2ray-config.txt" << EOF
+   🌐 地址: $SERVER_IP
    🔌 端口: 8080
-   📡 协议: $PROTOCOL_NAME + WebSocket
-   🛣️ 路径: $WS_PATH
-EOF
-
-    if [ "$CURRENT_PROTOCOL" = "vmess" ] || [ "$CURRENT_PROTOCOL" = "vless" ]; then
-        cat >> "$V2RAY_INSTALL_DIR/v2ray-config.txt" << EOF
    🔑 UUID: $UUID
-EOF
-    elif [ "$CURRENT_PROTOCOL" = "shadowsocks" ]; then
-        cat >> "$V2RAY_INSTALL_DIR/v2ray-config.txt" << EOF
-   🔐 加密方式: $METHOD
-   🔑 密码: $PASSWORD
-EOF
-    fi
+   🛣️ 路径: $WS_PATH
+   📡 协议: VLESS + WebSocket
 
-    cat >> "$V2RAY_INSTALL_DIR/v2ray-config.txt" << EOF
+📱 直连配置链接:
+$CLIENT_LINK
 
-📱 客户端配置:
-   🔗 $LINK_TYPE: $CLIENT_LINK
+🌐 CDN配置链接 (推荐):
+$CDN_CLIENT_LINK
 
-🔧 服务管理:
-   ▶️ 启动服务: systemctl start $SERVICE_NAME
-   ⏹️ 停止服务: systemctl stop $SERVICE_NAME
-   🔄 重启服务: systemctl restart $SERVICE_NAME
-   📊 查看状态: systemctl status $SERVICE_NAME
-   ✅ 启用自启: systemctl enable $SERVICE_NAME
-   ❌ 禁用自启: systemctl disable $SERVICE_NAME
+🔧 常用命令:
+   ▶️  启动: systemctl start v2ray
+   ⏹️  停止: systemctl stop v2ray
+   🔄 重启: systemctl restart v2ray
+   📊 状态: systemctl status v2ray
 
 📁 文件位置:
-   📂 配置文件: $V2RAY_CONFIG_DIR/config.json
-   📂 日志文件: $V2RAY_LOG_DIR/
-   📂 管理脚本: $SCRIPT_DIR/v2ray_manager.sh
+   📂 配置: $V2RAY_CONFIG_DIR/config.json
+   📂 日志: $V2RAY_LOG_DIR/
+   📂 脚本: $SCRIPT_DIR/v2ray_manager.sh
 
-🌐 CloudFront CDN配置:
-EOF
-
-    if [ -n "$CONFIG_IPV4" ] && [ "$CONFIG_IPV4" != "无法获取" ]; then
-        cat >> "$V2RAY_INSTALL_DIR/v2ray-config.txt" << EOF
-   📡 源站IPv4: $CONFIG_IPV4:8080
-EOF
-    fi
-
-    if [ -n "$CONFIG_IPV6" ] && [ "$CONFIG_IPV6" != "无法获取" ]; then
-        cat >> "$V2RAY_INSTALL_DIR/v2ray-config.txt" << EOF
-   📡 源站IPv6: [$CONFIG_IPV6]:8080
-EOF
-    fi
-
-    cat >> "$V2RAY_INSTALL_DIR/v2ray-config.txt" << EOF
-   🌍 域名/IP: $DOMAIN (默认域名，请替换为你的实际域名)
-   🔄 缓存策略: CachingDisabled
-   📋 源请求策略: Managed-AllViewer
+💡 推荐使用CDN配置，更稳定、更快速、更隐蔽
 
 ==========================================
 EOF
 
-    echo "$CLIENT_LINK" > "$V2RAY_INSTALL_DIR/v2ray-urls.txt"
+    # 保存所有配置链接
+    cat > "$V2RAY_INSTALL_DIR/v2ray-urls.txt" << EOF
+# V2Ray 配置链接
+
+## 直连配置
+$CLIENT_LINK
+
+## CDN配置 (推荐)
+$CDN_CLIENT_LINK
+
+## 手动配置参数
+
+### CDN配置 (推荐)
+- 协议: VLESS
+- 地址: my.host.com
+- 端口: 443
+- UUID: $UUID
+- 传输协议: WebSocket
+- 路径: $WS_PATH
+- TLS: 开启
+- SNI: my.host.com
+
+### 直连配置
+- 协议: VLESS
+- 地址: $SERVER_IP
+- 端口: 8080
+- UUID: $UUID
+- 传输协议: WebSocket
+- 路径: $WS_PATH
+- TLS: 关闭
+EOF
 
     echo -e "${GREEN}✅ 客户端配置生成完成${NC}"
-    echo -e "   📡 当前协议: $PROTOCOL_NAME"
+    echo -e "   🔗 配置链接已保存到: $V2RAY_INSTALL_DIR/v2ray-config.txt"
+    echo -e "   🔗 所有配置链接已保存到: $V2RAY_INSTALL_DIR/v2ray-urls.txt"
     echo ""
 }
 
@@ -1058,6 +610,7 @@ install_v2ray() {
     echo ""
     
     check_root
+    check_dependencies
     check_system
     download_v2ray
     create_directories
@@ -1097,7 +650,7 @@ EOF
     echo ""
     echo -e "${YELLOW}📋 下一步操作:${NC}"
     echo -e "   1. 📱 复制客户端配置到你的设备"
-    echo -e "   2. 🌐 配置CloudFront CDN"
+    echo -e "   2. 🌐 配置CDN (可选)"
     echo -e "   3. 🔍 运行 '2ray status' 检查服务状态"
     echo ""
     echo -e "${CYAN}💡 现在您可以使用 '2ray' 命令来管理 V2Ray！${NC}"
@@ -1249,7 +802,7 @@ show_status() {
     
     echo ""
     echo -e "${CYAN}🔍 端口检查:${NC}"
-    # 尝试多种方法检查端口
+    # 检查端口状态
     if command -v netstat >/dev/null 2>&1 && netstat -tlnp 2>/dev/null | grep -q ":8080 "; then
         echo -e "${GREEN}✅ 端口 8080: 正在监听${NC}"
     elif command -v ss >/dev/null 2>&1 && ss -tlnp 2>/dev/null | grep -q ":8080 "; then
@@ -1294,120 +847,13 @@ show_logs() {
     journalctl -u "$SERVICE_NAME" -f
 }
 
-# 启用开机自启
-enable_autostart() {
-    echo -e "${BLUE}✅ 启用开机自启...${NC}"
-    
-    systemctl enable "$SERVICE_NAME"
-    
-    if systemctl is-enabled --quiet "$SERVICE_NAME"; then
-        echo -e "${GREEN}✅ 开机自启已启用${NC}"
-    else
-        echo -e "${RED}❌ 开机自启启用失败${NC}"
-        exit 1
-    fi
-    echo ""
-}
 
-# 禁用开机自启
-disable_autostart() {
-    echo -e "${RED}❌ 禁用开机自启...${NC}"
-    
-    systemctl disable "$SERVICE_NAME"
-    
-    if ! systemctl is-enabled --quiet "$SERVICE_NAME"; then
-        echo -e "${GREEN}✅ 开机自启已禁用${NC}"
-    else
-        echo -e "${RED}❌ 开机自启禁用失败${NC}"
-        exit 1
-    fi
-    echo ""
-}
 
-# 查看配置
-show_config() {
-    echo -e "${YELLOW}⚙️  V2Ray 配置${NC}"
-    echo ""
-    
-    if [ -f "$V2RAY_CONFIG_DIR/config.json" ]; then
-        echo -e "${CYAN}📄 配置文件内容:${NC}"
-        cat "$V2RAY_CONFIG_DIR/config.json" | jq . 2>/dev/null || cat "$V2RAY_CONFIG_DIR/config.json"
-    else
-        echo -e "${RED}❌ 配置文件不存在${NC}"
-    fi
-    
-    echo ""
-    echo -e "${CYAN}📁 文件位置:${NC}"
-    echo -e "   📂 配置文件: $V2RAY_CONFIG_DIR/config.json"
-    echo -e "   📂 日志目录: $V2RAY_LOG_DIR"
-    echo -e "   📂 管理脚本: $SCRIPT_DIR/v2ray_manager.sh"
-    echo ""
-}
 
-# 重新加载配置
-reload_config() {
-    echo -e "${PURPLE}🔄 重新加载配置...${NC}"
-    
-    if systemctl is-active --quiet "$SERVICE_NAME"; then
-        systemctl reload "$SERVICE_NAME"
-        echo -e "${GREEN}✅ 配置重新加载成功${NC}"
-    else
-        echo -e "${YELLOW}⚠️  服务未运行，无法重新加载配置${NC}"
-    fi
-    echo ""
-}
 
-# 检查安装状态
-check_installation() {
-    echo -e "${CYAN}🔍 检查 V2Ray 安装状态${NC}"
-    echo ""
-    
-    if [ -f "/usr/local/bin/v2ray" ]; then
-        echo -e "${GREEN}✅ V2Ray 二进制文件: 已安装${NC}"
-        V2RAY_VERSION_CHECK=$(/usr/local/bin/v2ray version 2>/dev/null | head -n1 || echo "未知版本")
-        echo -e "   📋 版本: $V2RAY_VERSION_CHECK"
-    else
-        echo -e "${RED}❌ V2Ray 二进制文件: 未安装${NC}"
-    fi
-    
-    if [ -f "$V2RAY_CONFIG_DIR/config.json" ]; then
-        echo -e "${GREEN}✅ 配置文件: 存在${NC}"
-    else
-        echo -e "${RED}❌ 配置文件: 不存在${NC}"
-    fi
-    
-    if [ -f "/etc/systemd/system/$SERVICE_NAME.service" ]; then
-        echo -e "${GREEN}✅ 服务文件: 存在${NC}"
-    else
-        echo -e "${RED}❌ 服务文件: 不存在${NC}"
-    fi
-    
-    if systemctl is-active --quiet "$SERVICE_NAME"; then
-        echo -e "${GREEN}✅ 服务状态: 运行中${NC}"
-    else
-        echo -e "${RED}❌ 服务状态: 已停止${NC}"
-    fi
-    
-    if systemctl is-enabled --quiet "$SERVICE_NAME"; then
-        echo -e "${GREEN}✅ 开机自启: 已启用${NC}"
-    else
-        echo -e "${YELLOW}⚠️  开机自启: 已禁用${NC}"
-    fi
-    
-    # 尝试多种方法检查端口
-    if command -v netstat >/dev/null 2>&1 && netstat -tlnp 2>/dev/null | grep -q ":8080 "; then
-        echo -e "${GREEN}✅ 端口 8080: 正在监听${NC}"
-    elif command -v ss >/dev/null 2>&1 && ss -tlnp 2>/dev/null | grep -q ":8080 "; then
-        echo -e "${GREEN}✅ 端口 8080: 正在监听${NC}"
-    elif [ -f /proc/net/tcp ] && grep -q ":1F90 " /proc/net/tcp 2>/dev/null; then
-        # 8080 的十六进制是 1F90
-        echo -e "${GREEN}✅ 端口 8080: 正在监听${NC}"
-    else
-        echo -e "${YELLOW}⚠️  端口 8080: 无法检测状态${NC}"
-    fi
-    
-    echo ""
-}
+
+
+
 
 # 显示客户端配置
 show_client_config() {
@@ -1420,265 +866,56 @@ show_client_config() {
         return 1
     fi
 
-    # 检测当前协议类型
-    detect_current_protocol() {
-        if [ ! -f "$V2RAY_CONFIG_DIR/config.json" ]; then
-            echo "vmess"  # 默认协议
-            return
-        fi
+    # 获取配置信息
+    UUID=$(grep -o '"id": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4 2>/dev/null || echo "未找到")
+    WS_PATH=$(grep -o '"path": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4 2>/dev/null || echo "未找到")
 
-        # 使用更精确的grep匹配
-        local protocol=$(grep -o '"protocol": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | head -n1 | cut -d'"' -f4)
-        if [ -z "$protocol" ]; then
-            # 备选方法：查找inbounds下的protocol
-            protocol=$(grep -A 5 '"inbounds"' "$V2RAY_CONFIG_DIR/config.json" | grep -o '"protocol": "[^"]*"' | cut -d'"' -f4)
-        fi
-        echo "$protocol"
-    }
-
-    CURRENT_PROTOCOL=$(detect_current_protocol)
-
-    # 获取基本配置信息
-    if [ "$CURRENT_PROTOCOL" = "vmess" ] || [ "$CURRENT_PROTOCOL" = "vless" ]; then
-        UUID=$(grep -o '"id": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4 2>/dev/null || echo "未找到")
-        WS_PATH=$(grep -o '"path": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4 2>/dev/null || echo "未找到")
-    elif [ "$CURRENT_PROTOCOL" = "shadowsocks" ]; then
-        METHOD=$(grep -o '"method": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4 2>/dev/null || echo "未找到")
-        PASSWORD=$(grep -o '"password": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4 2>/dev/null || echo "未找到")
-        WS_PATH="/shadowsocks"
-    fi
-
-    # 获取服务器IP地址
-    get_server_ips() {
+    # 获取服务器IP
+    get_server_ip() {
         local ipv4=""
-        local ipv6=""
-
-        # 获取IPv4地址
-        ipv4=$(curl -s -4 --connect-timeout 5 --max-time 10 ifconfig.me 2>/dev/null)
-        if [ -z "$ipv4" ] || ! [[ $ipv4 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            ipv4=$(curl -s -4 --connect-timeout 5 --max-time 10 ipinfo.io/ip 2>/dev/null)
+        ipv4=$(curl -s -4 --connect-timeout 5 ifconfig.me 2>/dev/null || curl -s -4 --connect-timeout 5 ipinfo.io/ip 2>/dev/null)
+        if [ -z "$ipv4" ]; then
+            ipv4=$(ip route get 8.8.8.8 2>/dev/null | grep -oP 'src \K\S+' 2>/dev/null || echo "127.0.0.1")
         fi
-        if [ -z "$ipv4" ] || ! [[ $ipv4 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            ipv4=$(curl -s -4 --connect-timeout 5 --max-time 10 icanhazip.com 2>/dev/null)
-        fi
-
-        # 获取IPv6地址
-        ipv6=$(curl -s -6 --connect-timeout 5 --max-time 10 ifconfig.me 2>/dev/null)
-        if [ -z "$ipv6" ] || ! [[ $ipv6 =~ ^[0-9a-fA-F:]+$ ]]; then
-            ipv6=$(curl -s -6 --connect-timeout 5 --max-time 10 ipinfo.io/ip 2>/dev/null)
-        fi
-        if [ -z "$ipv6" ] || ! [[ $ipv6 =~ ^[0-9a-fA-F:]+$ ]]; then
-            ipv6=$(curl -s -6 --connect-timeout 5 --max-time 10 icanhazip.com 2>/dev/null)
-        fi
-
-        echo "$ipv4|$ipv6"
+        echo "$ipv4"
     }
 
-    SERVER_IPS=$(get_server_ips)
-    IPV4=$(echo "$SERVER_IPS" | cut -d'|' -f1)
-    IPV6=$(echo "$SERVER_IPS" | cut -d'|' -f2)
+    SERVER_IP=$(get_server_ip)
 
-    # 域名配置（用于反代）- 使用默认域名，用户可修改为自己的域名
-    DOMAIN="my.myhost.com"
-
-    echo -e "${YELLOW}📋 服务器信息:${NC}"
-    if [ -n "$IPV4" ] && [ "$IPV4" != "无法获取" ]; then
-        echo -e "   🌍 IPv4地址: $IPV4"
-    fi
-    if [ -n "$IPV6" ] && [ "$IPV6" != "无法获取" ]; then
-        echo -e "   🌐 IPv6地址: $IPV6"
-    fi
-    echo -e "   🌐 域名: $DOMAIN"
-    echo -e "   🔌 端口: 8080 (原始) / 443 (反代)"
-    echo -e "   📡 协议: $CURRENT_PROTOCOL + WebSocket"
-    echo -e "   🛣️  路径: $WS_PATH"
-    if [ "$CURRENT_PROTOCOL" = "vmess" ] || [ "$CURRENT_PROTOCOL" = "vless" ]; then
-        echo -e "   🔑 UUID: $UUID"
-    elif [ "$CURRENT_PROTOCOL" = "shadowsocks" ]; then
-        echo -e "   🔐 加密方式: $METHOD"
-        echo -e "   🔑 密码: $PASSWORD"
-    fi
+    echo -e "${YELLOW}📋 服务器配置信息:${NC}"
+    echo -e "   🌐 地址: $SERVER_IP"
+    echo -e "   🔌 端口: 8080"
+    echo -e "   🔑 UUID: $UUID"
+    echo -e "   🛣️ 路径: $WS_PATH"
+    echo -e "   📡 协议: VLESS + WebSocket"
     echo ""
 
-    # 根据协议生成不同配置
-    if [ "$CURRENT_PROTOCOL" = "vmess" ]; then
-        echo -e "${GREEN}🌍 IPv4 原始配置:${NC}"
-        VMESS_CONFIG_IPV4=$(cat << EOF
+    # 生成VLESS配置链接
+    VLESS_CONFIG=$(cat << EOF
 {
     "v": "2",
-    "ps": "V2Ray Server (IPv4)",
-    "add": "$IPV4",
+    "ps": "V2Ray Server",
+    "add": "$SERVER_IP",
     "port": "8080",
     "id": "$UUID",
     "aid": "0",
     "net": "ws",
     "type": "none",
-    "host": "",
+    "host": "$SERVER_IP",
     "path": "$WS_PATH",
-    "tls": ""
+    "tls": "none"
 }
 EOF
 )
-        VMESS_LINK_IPV4="vmess://$(echo "$VMESS_CONFIG_IPV4" | base64 -w 0)"
-        echo -e "   🔗 $VMESS_LINK_IPV4"
-        echo ""
+    CLIENT_LINK="vless://$UUID@$SERVER_IP:8080?encryption=none&security=none&type=ws&host=$SERVER_IP&path=$WS_PATH#V2Ray%20Server"
 
-        echo -e "${BLUE}🌐 域名反代配置 (推荐):${NC}"
-        VMESS_CONFIG_DOMAIN=$(cat << EOF
-{
-    "v": "2",
-    "ps": "V2Ray Server (Domain)",
-    "add": "$DOMAIN",
-    "port": "443",
-    "id": "$UUID",
-    "aid": "0",
-    "net": "ws",
-    "type": "none",
-    "host": "$DOMAIN",
-    "path": "$WS_PATH",
-    "tls": "tls",
-    "sni": "$DOMAIN"
-}
-EOF
-)
-        VMESS_LINK_DOMAIN="vmess://$(echo "$VMESS_CONFIG_DOMAIN" | base64 -w 0)"
-        echo -e "   🔗 $VMESS_LINK_DOMAIN"
-        echo ""
-
-        if [ -n "$IPV6" ] && [ "$IPV6" != "无法获取" ]; then
-            echo -e "${CYAN}🌐 IPv6 原始配置:${NC}"
-            VMESS_CONFIG_IPV6=$(cat << EOF
-{
-    "v": "2",
-    "ps": "V2Ray Server (IPv6)",
-    "add": "$IPV6",
-    "port": "8080",
-    "id": "$UUID",
-    "aid": "0",
-    "net": "ws",
-    "type": "none",
-    "host": "",
-    "path": "$WS_PATH",
-    "tls": ""
-}
-EOF
-)
-            VMESS_LINK_IPV6="vmess://$(echo "$VMESS_CONFIG_IPV6" | base64 -w 0)"
-            echo -e "   🔗 $VMESS_LINK_IPV6"
-            echo ""
-        fi
-
-    elif [ "$CURRENT_PROTOCOL" = "vless" ]; then
-        echo -e "${GREEN}🌍 IPv4 原始配置:${NC}"
-        # VLESS协议不需要aid字段
-        VLESS_CONFIG_IPV4=$(cat << EOF
-{
-    "v": "2",
-    "ps": "V2Ray Server (IPv4)",
-    "add": "$IPV4",
-    "port": "8080",
-    "id": "$UUID",
-    "net": "ws",
-    "type": "none",
-    "host": "",
-    "path": "$WS_PATH",
-    "tls": ""
-}
-EOF
-)
-        VLESS_LINK_IPV4="vless://$(echo "$VLESS_CONFIG_IPV4" | base64 -w 0)"
-        echo -e "   🔗 $VLESS_LINK_IPV4"
-        echo ""
-
-        echo -e "${BLUE}🌐 域名反代配置 (推荐):${NC}"
-        VLESS_CONFIG_DOMAIN=$(cat << EOF
-{
-    "v": "2",
-    "ps": "V2Ray Server (Domain)",
-    "add": "$DOMAIN",
-    "port": "443",
-    "id": "$UUID",
-    "net": "ws",
-    "type": "none",
-    "host": "$DOMAIN",
-    "path": "$WS_PATH",
-    "tls": "tls",
-    "sni": "$DOMAIN"
-}
-EOF
-)
-        VLESS_LINK_DOMAIN="vless://$(echo "$VLESS_CONFIG_DOMAIN" | base64 -w 0)"
-        echo -e "   🔗 $VLESS_LINK_DOMAIN"
-        echo ""
-
-        if [ -n "$IPV6" ] && [ "$IPV6" != "无法获取" ]; then
-            echo -e "${CYAN}🌐 IPv6 原始配置:${NC}"
-            VLESS_CONFIG_IPV6=$(cat << EOF
-{
-    "v": "2",
-    "ps": "V2Ray Server (IPv6)",
-    "add": "$IPV6",
-    "port": "8080",
-    "id": "$UUID",
-    "net": "ws",
-    "type": "none",
-    "host": "",
-    "path": "$WS_PATH",
-    "tls": ""
-}
-EOF
-)
-            VLESS_LINK_IPV6="vless://$(echo "$VLESS_CONFIG_IPV6" | base64 -w 0)"
-            echo -e "   🔗 $VLESS_LINK_IPV6"
-            echo ""
-        fi
-
-    elif [ "$CURRENT_PROTOCOL" = "shadowsocks" ]; then
-        # Shadowsocks配置
-        if [ -n "$IPV4" ] && [ "$IPV4" != "无法获取" ]; then
-            echo -e "${GREEN}🌍 IPv4 原始配置:${NC}"
-            SS_CONFIG_IPV4="${METHOD}:${PASSWORD}@${IPV4}:8080"
-            SS_LINK_IPV4="ss://$(echo "$SS_CONFIG_IPV4" | base64 -w 0)"
-            echo -e "   🔗 $SS_LINK_IPV4"
-            echo ""
-        fi
-
-        echo -e "${BLUE}🌐 域名反代配置 (推荐):${NC}"
-        SS_CONFIG_DOMAIN="${METHOD}:${PASSWORD}@${DOMAIN}:443"
-        SS_LINK_DOMAIN="ss://$(echo "$SS_CONFIG_DOMAIN" | base64 -w 0)"
-        echo -e "   🔗 $SS_LINK_DOMAIN"
-        echo ""
-
-        if [ -n "$IPV6" ] && [ "$IPV6" != "无法获取" ]; then
-            echo -e "${CYAN}🌐 IPv6 原始配置:${NC}"
-            SS_CONFIG_IPV6="${METHOD}:${PASSWORD}@[${IPV6}]:8080"
-            SS_LINK_IPV6="ss://$(echo "$SS_CONFIG_IPV6" | base64 -w 0)"
-            echo -e "   🔗 $SS_LINK_IPV6"
-            echo ""
-        fi
-    fi
-
-    echo -e "${YELLOW}📋 配置说明:${NC}"
-    echo -e "   🌐 域名反代配置: 使用 nginx 反向代理，端口 443，TLS 加密，更稳定"
-    echo -e "   🌍 IPv4 原始配置: 直接连接服务器 IP，端口 8080"
-    echo -e "   🌐 IPv6 原始配置: 直接连接服务器 IPv6，端口 8080"
-    echo ""
-    echo -e "${CYAN}💡 使用建议:${NC}"
-    echo -e "   🎯 推荐使用 IPv4 原始配置 (最稳定)"
-    echo -e "   🌍 直接连接服务器 IP: $IPV4:8080"
-    echo -e "   📱 支持所有 V2Ray 客户端"
-    echo -e "   ⚡ 无需额外配置即可使用"
-    echo ""
-    echo -e "${YELLOW}⚠️  重要提示:${NC}"
-    echo -e "   🔍 如果客户端无法导入，请尝试:"
-    echo -e "   1. 🌐 使用 IPv4 原始配置链接（最稳定）"
-    echo -e "   2. 📱 手动输入配置信息"
-    echo -e "   3. 🔄 运行诊断: 2ray diagnose-client-config"
+    echo -e "${GREEN}📱 配置链接:${NC}"
+    echo -e "   🔗 $CLIENT_LINK"
     echo ""
 
-    echo -e "${BLUE}📋 手动配置信息 (复制到客户端):${NC}"
+    echo -e "${YELLOW}📋 使用说明:${NC}"
     echo -e "   📝 协议: VLESS"
-    echo -e "   🌐 地址: $IPV4"
+    echo -e "   🌐 地址: $SERVER_IP"
     echo -e "   🔌 端口: 8080"
     echo -e "   🔑 UUID: $UUID"
     echo -e "   🛣️  路径: $WS_PATH"
@@ -1686,254 +923,114 @@ EOF
     echo -e "   🔐 TLS: 无"
     echo ""
 
-    echo -e "${PURPLE}🌐 域名配置使用说明:${NC}"
-    echo -e "   📝 域名配置使用默认域名: $DOMAIN"
-    echo -e "   🔧 如需使用域名，请在配置中将 '$DOMAIN' 替换为你的真实域名"
-    echo -e "   🔐 使用域名需要配置nginx反向代理和SSL证书"
-    echo -e "   ⚡ 域名配置需要额外配置，建议初学者先使用原始配置"
+    echo -e "${CYAN}💡 客户端兼容性:${NC}"
+    echo -e "   📱 v2rayNG (Android): ✅ 完全支持"
+    echo -e "   📱 V2Box (iOS/Android): ✅ 完全支持"
+    echo -e "   📱 Shadowrocket (iOS): ✅ 完全支持"
+    echo -e "   💻 Clash (PC): ✅ 完全支持"
     echo ""
-    echo -e "${CYAN}📖 域名配置示例:${NC}"
-    echo -e "   🔗 原始配置: my.myhost.com"
-    echo -e "   📝 修改后: your-domain.com (替换为你的真实域名)"
-    echo -e "   ⚙️  需要配置: nginx + SSL证书"
+    
+    # 生成CDN配置示例
+    echo -e "${PURPLE}🌐 CDN 配置示例 (推荐):${NC}"
+    echo -e "   📝 协议: VLESS"
+    echo -e "   🌐 地址: my.host.com"
+    echo -e "   🔌 端口: 443"
+    echo -e "   🔑 UUID: $UUID"
+    echo -e "   🛣️  路径: $WS_PATH"
+    echo -e "   🌐 传输协议: WebSocket"
+    echo -e "   🔐 TLS: 开启"
+    echo -e "   🏷️  SNI: my.host.com"
+    echo -e "   🚀 优势: 更稳定、更快速、更隐蔽"
     echo ""
-    echo -e "${YELLOW}🔧 nginx配置示例 (保存为 /etc/nginx/sites-available/v2ray.conf):${NC}"
-    echo -e "   server {"
-    echo -e "       listen 443 ssl;"
-    echo -e "       server_name my.myhost.com;  # 替换为你的域名"
-    echo -e "       "
-    echo -e "       ssl_certificate /path/to/your-cert.pem;"
-    echo -e "       ssl_certificate_key /path/to/your-key.pem;"
-    echo -e "       "
-    echo -e "       location /8DXVC {  # 替换为你的WebSocket路径"
-    echo -e "           proxy_pass http://127.0.0.1:8080;"
-    echo -e "           proxy_http_version 1.1;"
-    echo -e "           proxy_set_header Upgrade \$http_upgrade;"
-    echo -e "           proxy_set_header Connection \"upgrade\";"
-    echo -e "           proxy_set_header Host \$host;"
-    echo -e "       }"
-    echo -e "   }"
+    
+    # 生成CDN配置链接
+    CDN_CLIENT_LINK="vless://$UUID@my.host.com:443?encryption=none&security=tls&sni=my.host.com&type=ws&host=my.host.com&path=$WS_PATH#V2Ray%20CDN%20Server"
+    echo -e "${PURPLE}🔗 CDN配置链接:${NC}"
+    echo -e "   🔗 $CDN_CLIENT_LINK"
     echo ""
-
-    echo -e "${GREEN}🔧 客户端导入问题解决方案:${NC}"
-    echo -e "   📱 如果链接无法导入，尝试以下方法:"
-    echo -e "   1️⃣  📝 手动输入配置信息（推荐）"
-    echo -e "   2️⃣  🔗 使用 IPv4 原始配置链接（端口8080）"
-    echo -e "   3️⃣  ⚠️  避免使用IP地址+TLS配置（可能不兼容）"
+    
+    # 生成备用配置（更兼容的版本）
+    echo -e "${YELLOW}🔄 备用配置（更兼容）:${NC}"
+    echo -e "   📝 协议: VLESS"
+    echo -e "   🌐 地址: $SERVER_IP"
+    echo -e "   🔌 端口: 8080"
+    echo -e "   🔑 UUID: $UUID"
+    echo -e "   🛣️  路径: $WS_PATH"
+    echo -e "   🌐 传输协议: WebSocket"
+    echo -e "   🔐 TLS: 无"
     echo ""
-
-    echo -e "${YELLOW}📋 推荐配置方式:${NC}"
-    echo -e "   ✅ 最稳定: IPv4 + 端口8080 + 无TLS"
-    echo -e "   ⚠️  可能有问题: IP地址 + 端口443 + TLS"
-    echo -e "   💡 原因: 部分客户端不支持IP地址作为TLS域名"
+    
+    # 生成手动配置说明
+    echo -e "${BLUE}📋 手动配置说明:${NC}"
+    echo -e "   如果自动配置无法导入，请手动输入以下信息:"
     echo ""
-
-    echo -e "${YELLOW}🔧 客户端兼容性说明:${NC}"
-    echo -e "   📋 如果链接无法导入，请尝试以下方法:"
-    echo -e "   1. 📱 使用 v2rayNG: 直接扫描二维码或复制链接"
-    echo -e "   2. 🖥️  使用 V2Box: 支持多种格式导入"
-    echo -e "   3. 📱 使用 Shadowrocket: 支持 vless:// 链接"
-    echo -e "   4. 💻 使用 Clash: 复制配置信息手动添加"
+    echo -e "${PURPLE}🌐 CDN配置 (推荐):${NC}"
+    echo -e "   • 协议: VLESS"
+    echo -e "   • 地址: my.host.com"
+    echo -e "   • 端口: 443"
+    echo -e "   • UUID: $UUID"
+    echo -e "   • 传输协议: WebSocket"
+    echo -e "   • 路径: $WS_PATH"
+    echo -e "   • TLS: 开启"
+    echo -e "   • SNI: my.host.com"
     echo ""
-
-    # 生成二维码（如果系统支持）
-    if command -v qrencode >/dev/null 2>&1; then
-        echo -e "${GREEN}📱 二维码生成:${NC}"
-        if [ "$CURRENT_PROTOCOL" = "vless" ] && [ -n "$VLESS_LINK_DOMAIN" ]; then
-            echo -e "   🌐 域名配置二维码:"
-            echo "$VLESS_LINK_DOMAIN" | qrencode -t UTF8 -o -
-            echo ""
-        elif [ "$CURRENT_PROTOCOL" = "vmess" ] && [ -n "$VMESS_LINK_DOMAIN" ]; then
-            echo -e "   🌐 域名配置二维码:"
-            echo "$VMESS_LINK_DOMAIN" | qrencode -t UTF8 -o -
-            echo ""
-        fi
-    else
-        echo -e "${YELLOW}💡 提示: 安装 qrencode 可生成二维码${NC}"
-        echo -e "   📦 Ubuntu/Debian: sudo apt install qrencode"
-        echo -e "   📦 CentOS: sudo yum install qrencode"
-        echo ""
-    fi
+    echo -e "${YELLOW}🌐 直连配置:${NC}"
+    echo -e "   • 协议: VLESS"
+    echo -e "   • 地址: $SERVER_IP"
+    echo -e "   • 端口: 8080"
+    echo -e "   • UUID: $UUID"
+    echo -e "   • 传输协议: WebSocket"
+    echo -e "   • 路径: $WS_PATH"
+    echo -e "   • TLS: 关闭"
+    echo ""
 
     # 保存配置到文件
     if [ -d "$V2RAY_INSTALL_DIR" ]; then
-        cat > "$V2RAY_INSTALL_DIR/client-configs.txt" << EOF
+        cat > "$V2RAY_INSTALL_DIR/v2ray-config.txt" << EOF
 ==========================================
-📱 V2Ray 客户端配置
+🚀 V2Ray 服务器配置
 ==========================================
 
 📋 服务器信息:
-   🌍 IPv4地址: $IPV4
-   🌐 IPv6地址: $IPV6
-   🌐 域名: $DOMAIN
-   🔌 端口: 8080 (原始) / 443 (反代)
-   📡 协议: $CURRENT_PROTOCOL + WebSocket
-   🛣️  路径: $WS_PATH
-EOF
-
-        if [ "$CURRENT_PROTOCOL" = "vmess" ] || [ "$CURRENT_PROTOCOL" = "vless" ]; then
-            cat >> "$V2RAY_INSTALL_DIR/client-configs.txt" << EOF
+   🌐 地址: $SERVER_IP
+   🔌 端口: 8080
    🔑 UUID: $UUID
-EOF
-        elif [ "$CURRENT_PROTOCOL" = "shadowsocks" ]; then
-            cat >> "$V2RAY_INSTALL_DIR/client-configs.txt" << EOF
-   🔐 加密方式: $METHOD
-   🔑 密码: $PASSWORD
-EOF
-        fi
+   🛣️ 路径: $WS_PATH
+   📡 协议: VLESS + WebSocket
 
-        cat >> "$V2RAY_INSTALL_DIR/client-configs.txt" << EOF
+📱 直连配置链接:
+$CLIENT_LINK
 
-🌐 域名反代配置 (推荐):
-EOF
+🌐 CDN配置链接 (推荐):
+$CDN_CLIENT_LINK
 
-        if [ "$CURRENT_PROTOCOL" = "vmess" ]; then
-            echo "$VMESS_LINK_DOMAIN" >> "$V2RAY_INSTALL_DIR/client-configs.txt"
-        elif [ "$CURRENT_PROTOCOL" = "vless" ]; then
-            echo "$VLESS_LINK_DOMAIN" >> "$V2RAY_INSTALL_DIR/client-configs.txt"
-        elif [ "$CURRENT_PROTOCOL" = "shadowsocks" ]; then
-            echo "$SS_LINK_DOMAIN" >> "$V2RAY_INSTALL_DIR/client-configs.txt"
-        fi
+📋 手动配置参数:
 
-        cat >> "$V2RAY_INSTALL_DIR/client-configs.txt" << EOF
+🌐 CDN配置 (推荐):
+   • 协议: VLESS
+   • 地址: my.host.com
+   • 端口: 443
+   • UUID: $UUID
+   • 传输协议: WebSocket
+   • 路径: $WS_PATH
+   • TLS: 开启
+   • SNI: my.host.com
 
-🌍 IPv4 原始配置:
-EOF
+🌐 直连配置:
+   • 协议: VLESS
+   • 地址: $SERVER_IP
+   • 端口: 8080
+   • UUID: $UUID
+   • 传输协议: WebSocket
+   • 路径: $WS_PATH
+   • TLS: 关闭
 
-        if [ "$CURRENT_PROTOCOL" = "vmess" ]; then
-            echo "$VMESS_LINK_IPV4" >> "$V2RAY_INSTALL_DIR/client-configs.txt"
-        elif [ "$CURRENT_PROTOCOL" = "vless" ]; then
-            echo "$VLESS_LINK_IPV4" >> "$V2RAY_INSTALL_DIR/client-configs.txt"
-        elif [ "$CURRENT_PROTOCOL" = "shadowsocks" ]; then
-            echo "$SS_LINK_IPV4" >> "$V2RAY_INSTALL_DIR/client-configs.txt"
-        fi
-
-        if [ -n "$IPV6" ] && [ "$IPV6" != "无法获取" ]; then
-            cat >> "$V2RAY_INSTALL_DIR/client-configs.txt" << EOF
-
-🌐 IPv6 原始配置:
-EOF
-            if [ "$CURRENT_PROTOCOL" = "vmess" ]; then
-                echo "$VMESS_LINK_IPV6" >> "$V2RAY_INSTALL_DIR/client-configs.txt"
-            elif [ "$CURRENT_PROTOCOL" = "vless" ]; then
-                echo "$VLESS_LINK_IPV6" >> "$V2RAY_INSTALL_DIR/client-configs.txt"
-            elif [ "$CURRENT_PROTOCOL" = "shadowsocks" ]; then
-                echo "$SS_LINK_IPV6" >> "$V2RAY_INSTALL_DIR/client-configs.txt"
-            fi
-        fi
-
-        cat >> "$V2RAY_INSTALL_DIR/client-configs.txt" << EOF
-
-📋 配置说明:
-   🌐 域名反代配置: 使用默认域名 $DOMAIN，端口 443，TLS 加密
-   🌍 IPv4 原始配置: 直接连接服务器 IP，端口 8080
-   🌐 IPv6 原始配置: 直接连接服务器 IPv6，端口 8080
-
-💡 使用建议:
-   ✅ 初学者推荐: IPv4 原始配置（直接可用，无需配置）
-   🔧 高级用户可选: 域名配置（需要nginx + SSL证书）
-   📝 使用域名: 将配置中的 $DOMAIN 替换为你的真实域名
-   🔐 域名配置需要额外设置nginx反向代理和SSL证书
+💡 推荐使用CDN配置，更稳定、更快速、更隐蔽
 
 ==========================================
 EOF
-        echo -e "${GREEN}✅ 配置已保存到: $V2RAY_INSTALL_DIR/client-configs.txt${NC}"
+        echo -e "${GREEN}✅ 配置已保存到: $V2RAY_INSTALL_DIR/v2ray-config.txt${NC}"
     fi
-    echo ""
-}
-
-# 客户端配置诊断
-diagnose_client_config() {
-    echo -e "${CYAN}🔍 客户端配置诊断${NC}"
-    echo ""
-
-    # 检查当前协议
-    detect_current_protocol() {
-        if [ ! -f "$V2RAY_CONFIG_DIR/config.json" ]; then
-            echo "vmess"  # 默认协议
-            return
-        fi
-
-        local protocol=$(grep -o '"protocol": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | head -n1 | cut -d'"' -f4)
-        if [ -z "$protocol" ]; then
-            protocol=$(grep -A 5 '"inbounds"' "$V2RAY_CONFIG_DIR/config.json" | grep -o '"protocol": "[^"]*"' | cut -d'"' -f4)
-        fi
-        echo "$protocol"
-    }
-
-    CURRENT_PROTOCOL=$(detect_current_protocol)
-
-    echo -e "${YELLOW}📋 当前协议诊断:${NC}"
-    echo -e "   📡 当前协议: $CURRENT_PROTOCOL"
-
-    # 检查配置文件完整性
-    if [ ! -f "$V2RAY_CONFIG_DIR/config.json" ]; then
-        echo -e "${RED}❌ 配置文件不存在${NC}"
-        return 1
-    fi
-
-    # 检查必要的字段
-    UUID=$(grep -o '"id": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4 2>/dev/null)
-    WS_PATH=$(grep -o '"path": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4 2>/dev/null)
-
-    echo -e "   🔑 UUID: ${UUID:-'未找到'}"
-    echo -e "   🛣️  WebSocket路径: ${WS_PATH:-'未找到'}"
-
-    if [ -z "$UUID" ]; then
-        echo -e "${RED}❌ UUID 缺失${NC}"
-    else
-        echo -e "${GREEN}✅ UUID 正常${NC}"
-    fi
-
-    if [ -z "$WS_PATH" ]; then
-        echo -e "${RED}❌ WebSocket 路径缺失${NC}"
-    else
-        echo -e "${GREEN}✅ WebSocket 路径正常${NC}"
-    fi
-
-    # 检查服务状态
-    if systemctl is-active --quiet v2ray; then
-        echo -e "${GREEN}✅ V2Ray 服务运行正常${NC}"
-    else
-        echo -e "${RED}❌ V2Ray 服务未运行${NC}"
-    fi
-
-    # 检查端口监听
-    if netstat -tlnp 2>/dev/null | grep -q ":8080 "; then
-        echo -e "${GREEN}✅ 端口 8080 监听正常${NC}"
-    else
-        echo -e "${RED}❌ 端口 8080 未监听${NC}"
-    fi
-
-    echo ""
-    echo -e "${YELLOW}🔧 故障排除建议:${NC}"
-
-    if [ "$CURRENT_PROTOCOL" = "vless" ]; then
-        echo -e "   📱 VLESS 协议客户端兼容性:"
-        echo -e "   • v2rayNG (Android): ✅ 完全支持"
-        echo -e "   • V2Box (Android/iOS): ✅ 完全支持"
-        echo -e "   • Shadowrocket (iOS): ✅ 完全支持"
-        echo -e "   • Clash (PC): ✅ 完全支持"
-        echo -e "   • SingBox: ✅ 完全支持"
-    elif [ "$CURRENT_PROTOCOL" = "vmess" ]; then
-        echo -e "   📱 VMess 协议客户端兼容性:"
-        echo -e "   • v2rayNG (Android): ✅ 完全支持"
-        echo -e "   • V2Box (Android/iOS): ✅ 完全支持"
-        echo -e "   • 小火箭 (Shadowrocket): ✅ 完全支持"
-        echo -e "   • 某些旧客户端: ⚠️ 可能有兼容性问题"
-    elif [ "$CURRENT_PROTOCOL" = "shadowsocks" ]; then
-        echo -e "   📱 Shadowsocks 协议客户端兼容性:"
-        echo -e "   • 几乎所有客户端: ✅ 完全支持"
-        echo -e "   • Clash: ✅ 完全支持"
-        echo -e "   • Surge: ✅ 完全支持"
-    fi
-
-    echo ""
-    echo -e "${YELLOW}📋 常见问题解决方案:${NC}"
-    echo -e "   1. 如果客户端无法识别链接，尝试手动输入配置"
-    echo -e "   2. 检查客户端版本是否支持当前协议"
-    echo -e "   3. 尝试切换到更兼容的协议 (Shadowsocks)"
-    echo -e "   4. 检查防火墙是否阻止了 8080 端口"
     echo ""
 }
 
@@ -1941,154 +1038,58 @@ diagnose_client_config() {
 show_info() {
     echo -e "${CYAN}ℹ️  V2Ray 信息${NC}"
     echo ""
-    
+
+    echo -e "${CYAN}📋 脚本信息:${NC}"
+    echo -e "   📂 脚本路径: $SCRIPT_DIR/v2ray_manager.sh"
+    echo -e "   🔢 脚本版本: 2.0.0"
+    echo -e "   📅 更新日期: 2025年"
+    echo ""
+
     if [ -f "/usr/local/bin/v2ray" ]; then
-        echo -e "${CYAN}📋 版本信息:${NC}"
+        echo -e "${CYAN}📋 V2Ray 版本信息:${NC}"
         /usr/local/bin/v2ray version 2>/dev/null || echo "无法获取版本信息"
         echo ""
     fi
-    
+
     if [ -f "$V2RAY_CONFIG_DIR/config.json" ]; then
         echo -e "${CYAN}⚙️  配置信息:${NC}"
         UUID=$(grep -o '"id": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4 2>/dev/null || echo "未找到")
         PORT=$(grep -o '"port": [0-9]*' "$V2RAY_CONFIG_DIR/config.json" | cut -d' ' -f2 2>/dev/null || echo "未找到")
         WS_PATH=$(grep -o '"path": "[^"]*"' "$V2RAY_CONFIG_DIR/config.json" | cut -d'"' -f4 2>/dev/null || echo "未找到")
-        
+
         echo -e "   🔑 UUID: $UUID"
         echo -e "   🌐 端口: $PORT"
         echo -e "   🛣️  路径: $WS_PATH"
         echo ""
     fi
-    
-    echo -e "${CYAN}🌐 服务器信息:${NC}"
-    
-    # 改进的IP获取方法
-    get_server_ips() {
-        local ipv4=""
-        local ipv6=""
-        
-        # 获取IPv4地址
-        ipv4=$(curl -s -4 --connect-timeout 5 --max-time 10 ifconfig.me 2>/dev/null)
-        if [ -z "$ipv4" ] || ! [[ $ipv4 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            ipv4=$(curl -s -4 --connect-timeout 5 --max-time 10 ipinfo.io/ip 2>/dev/null)
-        fi
-        if [ -z "$ipv4" ] || ! [[ $ipv4 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            ipv4=$(curl -s -4 --connect-timeout 5 --max-time 10 icanhazip.com 2>/dev/null)
-        fi
-        
-        # 获取IPv6地址
-        ipv6=$(curl -s -6 --connect-timeout 5 --max-time 10 ifconfig.me 2>/dev/null)
-        if [ -z "$ipv6" ] || ! [[ $ipv6 =~ ^[0-9a-fA-F:]+$ ]]; then
-            ipv6=$(curl -s -6 --connect-timeout 5 --max-time 10 ipinfo.io/ip 2>/dev/null)
-        fi
-        if [ -z "$ipv6" ] || ! [[ $ipv6 =~ ^[0-9a-fA-F:]+$ ]]; then
-            ipv6=$(curl -s -6 --connect-timeout 5 --max-time 10 icanhazip.com 2>/dev/null)
-        fi
-        
-        # 如果都没有获取到，尝试本地网络接口
-        if [ -z "$ipv4" ]; then
-            ipv4=$(ip route get 8.8.8.8 2>/dev/null | grep -oP 'src \K\S+' 2>/dev/null)
-            if [ -n "$ipv4" ] && [[ $ipv4 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-                ipv4="$ipv4 (本地)"
-            fi
-        fi
-        
-        echo "$ipv4|$ipv6"
-    }
-    
-    SERVER_IPS=$(get_server_ips)
-    IPV4=$(echo "$SERVER_IPS" | cut -d'|' -f1)
-    IPV6=$(echo "$SERVER_IPS" | cut -d'|' -f2)
-    
-    if [ -n "$IPV4" ] && [ "$IPV4" != "无法获取" ]; then
-        echo -e "   🌍 IPv4地址: $IPV4"
-    fi
-    if [ -n "$IPV6" ] && [ "$IPV6" != "无法获取" ]; then
-        echo -e "   🌐 IPv6地址: $IPV6"
-    fi
-    if [ -z "$IPV4" ] && [ -z "$IPV6" ]; then
-        echo -e "   ❌ 无法获取IP地址"
-    fi
-    
-    # 改进的系统信息获取
-    # 获取系统信息
-    if [ -f /etc/os-release ]; then
-        . /etc/os-release
-        OS_NAME="${NAME:-未知}"
-        OS_VERSION="${VERSION:-}"
-        echo -e "   🖥️  系统: $OS_NAME $OS_VERSION"
-    elif command -v uname >/dev/null 2>&1; then
-        OS_NAME=$(uname -s 2>/dev/null || echo "未知")
-        OS_VERSION=$(uname -r 2>/dev/null || echo "")
-        echo -e "   🖥️  系统: $OS_NAME $OS_VERSION"
-    else
-        echo -e "   🖥️  系统: 未知"
-    fi
-    
-    # 获取架构信息
-    if command -v uname >/dev/null 2>&1; then
-        ARCH=$(uname -m 2>/dev/null || echo "未知")
-        echo -e "   🏗️  架构: $ARCH"
-    elif [ -f /proc/cpuinfo ]; then
-        # 从 /proc/cpuinfo 获取架构信息
-        if grep -q "aarch64\|arm64" /proc/cpuinfo 2>/dev/null; then
-            ARCH="aarch64"
-        elif grep -q "armv7" /proc/cpuinfo 2>/dev/null; then
-            ARCH="armv7l"
-        elif grep -q "x86_64\|amd64" /proc/cpuinfo 2>/dev/null; then
-            ARCH="x86_64"
-        elif grep -q "i386\|i686" /proc/cpuinfo 2>/dev/null; then
-            ARCH="i386"
-        else
-            ARCH="未知"
-        fi
-        echo -e "   🏗️  架构: $ARCH"
-    else
-        echo -e "   🏗️  架构: 未知"
-    fi
-    echo ""
-    
+
     echo -e "${CYAN}📁 文件信息:${NC}"
     echo -e "   📂 安装目录: $V2RAY_INSTALL_DIR"
     echo -e "   📂 配置目录: $V2RAY_CONFIG_DIR"
     echo -e "   📂 日志目录: $V2RAY_LOG_DIR"
     echo -e "   📂 管理脚本: $SCRIPT_DIR/v2ray_manager.sh"
     echo ""
-    
-    if [ -f "$V2RAY_INSTALL_DIR/v2ray-config.txt" ]; then
-        echo -e "${CYAN}📱 客户端配置:${NC}"
-        echo -e "   📄 配置文件: $V2RAY_INSTALL_DIR/v2ray-config.txt"
-        echo -e "   🔗 链接文件: $V2RAY_INSTALL_DIR/v2ray-urls.txt"
-        echo ""
-    fi
 }
 
 # 显示交互式菜单
 show_menu() {
     clear
-    echo -e "${CYAN}🚀 V2Ray 管理脚本 - 一站式管理工具${NC}"
+    echo -e "${CYAN}🚀 V2Ray 管理脚本 v2.0.0${NC}"
     echo ""
     echo -e "${YELLOW}📋 请选择要执行的操作:${NC}"
     echo ""
-    echo -e "  ${GREEN}1${NC} 📦 安装 V2Ray"
+    echo -e "  ${GREEN}1${NC} 📦 安装 V2Ray (默认开机启动)"
     echo -e "  ${RED}2${NC} 🗑️  卸载 V2Ray"
     echo -e "  ${BLUE}3${NC} ▶️  启动服务"
     echo -e "  ${YELLOW}4${NC} ⏹️  停止服务"
     echo -e "  ${PURPLE}5${NC} 🔄 重启服务"
-    echo -e "  ${BLUE}6${NC} ✅ 启用开机自启"
-    echo -e "  ${RED}7${NC} ❌ 禁用开机自启"
-    echo -e "  ${CYAN}8${NC} 📊 查看服务状态"
-    echo -e "  ${GREEN}9${NC} 📝 查看日志"
-    echo -e "  ${CYAN}10${NC} 🔍 检查安装状态"
-    echo -e "  ${GREEN}11${NC} ℹ️  显示详细信息"
-    echo -e "  ${YELLOW}12${NC} ⚙️  查看配置"
-    echo -e "  ${PURPLE}13${NC} 🔄 重新加载配置"
-    echo -e "  ${CYAN}14${NC} 📦 检查更新状态"
-    echo -e "  ${PURPLE}15${NC} 🔄 更新 V2Ray 内核"
-    echo -e "  ${GREEN}16${NC} 📱 查看客户端配置"
-    echo -e "  ${BLUE}17${NC} 🔄 切换协议 (解决兼容性问题)"
-    echo -e "  ${PURPLE}18${NC} 🔍 客户端配置诊断"
-    echo -e "  ${YELLOW}19${NC} ❓ 显示帮助"
+    echo -e "  ${CYAN}6${NC} 📊 查看服务状态"
+    echo -e "  ${GREEN}7${NC} 📝 查看日志"
+    echo -e "  ${CYAN}8${NC} 📱 查看客户端配置"
+    echo -e "  ${PURPLE}9${NC} 🔄 更新 V2Ray 内核"
+    echo -e "  ${BLUE}10${NC} ℹ️ 显示详细信息"
+    echo -e "  ${BLUE}11${NC} 🔢 显示版本信息"
+    echo -e "  ${BLUE}12${NC} ❓ 显示帮助"
     echo -e "  ${RED}0${NC} 🚪 退出程序"
     echo ""
 }
@@ -2127,76 +1128,38 @@ handle_menu_choice() {
             restart_service
             ;;
         6)
-            echo -e "${CYAN}🎯 选择: 启用开机自启${NC}"
-            echo ""
-            check_root
-            enable_autostart
-            ;;
-        7)
-            echo -e "${CYAN}🎯 选择: 禁用开机自启${NC}"
-            echo ""
-            check_root
-            disable_autostart
-            ;;
-        8)
             echo -e "${CYAN}🎯 选择: 查看服务状态${NC}"
             echo ""
             show_status
             ;;
-        9)
+        7)
             echo -e "${CYAN}🎯 选择: 查看日志${NC}"
             echo ""
             show_logs
             ;;
-        10)
-            echo -e "${CYAN}🎯 选择: 检查安装状态${NC}"
+        8)
+            echo -e "${CYAN}🎯 选择: 查看客户端配置${NC}"
             echo ""
-            check_installation
+            show_client_config
             ;;
-        11)
-            echo -e "${CYAN}🎯 选择: 显示详细信息${NC}"
-            echo ""
-            show_info
-            ;;
-        12)
-            echo -e "${CYAN}🎯 选择: 查看配置${NC}"
-            echo ""
-            show_config
-            ;;
-        13)
-            echo -e "${CYAN}🎯 选择: 重新加载配置${NC}"
-            echo ""
-            check_root
-            reload_config
-            ;;
-        14)
-            echo -e "${CYAN}🎯 选择: 检查更新状态${NC}"
-            echo ""
-            check_update
-            ;;
-        15)
+        9)
             echo -e "${CYAN}🎯 选择: 更新 V2Ray 内核${NC}"
             echo ""
             check_root
             update_v2ray
             ;;
-        16)
-            echo -e "${CYAN}🎯 选择: 查看客户端配置${NC}"
+        10)
+            echo -e "${CYAN}🎯 选择: 显示详细信息${NC}"
             echo ""
-            show_client_config
+            show_info
             ;;
-        17)
-            echo -e "${CYAN}🎯 选择: 切换协议${NC}"
+        11)
+            echo -e "${CYAN}🎯 选择: 显示版本信息${NC}"
             echo ""
-            check_root
-            switch_protocol
+            echo -e "${CYAN}🚀 V2Ray 管理脚本 v2.0.0${NC}"
+            echo -e "${BLUE}📅 更新日期: 2025年${NC}"
             ;;
-        18)
-            echo -e "${CYAN}🎯 选择: 客户端配置诊断${NC}"
-            echo ""
-            diagnose_client_config
-            ;;
-        19)
+        12)
             echo -e "${CYAN}🎯 选择: 显示帮助${NC}"
             echo ""
             show_help
@@ -2208,7 +1171,7 @@ handle_menu_choice() {
             ;;
         *)
             echo -e "${RED}❌ 无效选择: $choice${NC}"
-            echo -e "${YELLOW}💡 请输入 0-19 之间的数字${NC}"
+            echo -e "${YELLOW}💡 请输入 0-12 之间的数字${NC}"
             ;;
     esac
 }
@@ -2217,27 +1180,27 @@ handle_menu_choice() {
 interactive_menu() {
     while true; do
         show_menu
-        
-        echo -e "${YELLOW}请输入选项编号 (0-16):${NC} "
+
+        echo -e "${YELLOW}请输入选项编号 (0-12):${NC} "
         read -p "> " choice
-        
+
         # 检查输入是否为空
         if [ -z "$choice" ]; then
             echo -e "${RED}❌ 请输入有效的选项编号${NC}"
             sleep 2
             continue
         fi
-        
+
         # 检查输入是否为数字
         if ! [[ "$choice" =~ ^[0-9]+$ ]]; then
             echo -e "${RED}❌ 请输入数字${NC}"
             sleep 2
             continue
         fi
-        
+
         # 处理选择
         handle_menu_choice "$choice"
-        
+
         # 如果不是退出选项，等待用户按键继续
         if [ "$choice" != "0" ]; then
             echo ""
@@ -2281,23 +1244,8 @@ main() {
         logs)
             show_logs
             ;;
-        enable)
-            check_root
-            enable_autostart
-            ;;
-        disable)
-            check_root
-            disable_autostart
-            ;;
         config)
-            show_config
-            ;;
-        reload)
-            check_root
-            reload_config
-            ;;
-        check)
-            check_installation
+            show_client_config
             ;;
         info)
             show_info
@@ -2306,18 +1254,9 @@ main() {
             check_root
             update_v2ray
             ;;
-        check-update)
-            check_update
-            ;;
-        client-config|config-client)
-            show_client_config
-            ;;
-        switch-protocol)
-            check_root
-            switch_protocol
-            ;;
-        diagnose-client-config)
-            diagnose_client_config
+        version)
+            echo -e "${CYAN}🚀 V2Ray 管理脚本 v2.0.0${NC}"
+            echo -e "${BLUE}📅 更新日期: 2025年${NC}"
             ;;
         menu)
             interactive_menu
@@ -2329,4 +1268,4 @@ main() {
 }
 
 # 运行主函数
-main "$@" 
+main "$@"

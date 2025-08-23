@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# V2Ray 一键安装脚本
+# V2Ray 一键安装脚本 v2.0.0
 # 从 GitHub 下载并运行 V2Ray 管理脚本
 
 set -e
@@ -19,7 +19,7 @@ GITHUB_BRANCH="main"
 SCRIPT_NAME="v2ray_manager.sh"
 SCRIPT_URL="https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${SCRIPT_NAME}"
 
-echo -e "${CYAN}🚀 V2Ray 一键安装脚本${NC}"
+echo -e "${CYAN}🚀 V2Ray 一键安装脚本 v2.0.0${NC}"
 echo -e "${CYAN}📦 正在从 GitHub 下载管理脚本...${NC}"
 echo ""
 
@@ -34,9 +34,30 @@ fi
 echo -e "${CYAN}🔍 检查网络连接...${NC}"
 if ! curl -s --connect-timeout 5 https://raw.githubusercontent.com > /dev/null; then
     echo -e "${RED}❌ 无法连接到 GitHub，请检查网络连接${NC}"
+    echo -e "${YELLOW}💡 如果网络正常，可能是 GitHub 访问受限${NC}"
+    echo -e "${YELLOW}💡 请尝试使用代理或更换网络环境${NC}"
     exit 1
 fi
 echo -e "${GREEN}✅ 网络连接正常${NC}"
+echo ""
+
+# 检查依赖工具
+echo -e "${CYAN}🔍 检查系统依赖...${NC}"
+if ! command -v curl >/dev/null 2>&1; then
+    echo -e "${RED}❌ 缺少 curl 工具${NC}"
+    echo -e "${YELLOW}💡 请先安装 curl:${NC}"
+    if command -v apt-get >/dev/null 2>&1; then
+        echo -e "   📦 Debian/Ubuntu: sudo apt-get update && sudo apt-get install curl"
+    elif command -v yum >/dev/null 2>&1; then
+        echo -e "   📦 CentOS/RHEL: sudo yum install curl"
+    elif command -v dnf >/dev/null 2>&1; then
+        echo -e "   📦 Fedora: sudo dnf install curl"
+    else
+        echo -e "   📦 请使用您的包管理器安装 curl"
+    fi
+    exit 1
+fi
+echo -e "${GREEN}✅ 系统依赖检查完成${NC}"
 echo ""
 
 # 下载管理脚本
@@ -45,6 +66,13 @@ if curl -L -o /tmp/${SCRIPT_NAME} "${SCRIPT_URL}"; then
     echo -e "${GREEN}✅ 下载完成${NC}"
 else
     echo -e "${RED}❌ 下载失败${NC}"
+    echo -e "${YELLOW}💡 请检查网络连接或稍后重试${NC}"
+    exit 1
+fi
+
+# 验证下载的文件
+if [ ! -f "/tmp/${SCRIPT_NAME}" ] || [ ! -s "/tmp/${SCRIPT_NAME}" ]; then
+    echo -e "${RED}❌ 下载的文件无效或为空${NC}"
     exit 1
 fi
 
@@ -84,6 +112,7 @@ echo -e "${YELLOW}📋 使用方法:${NC}"
 echo -e "  🎮 交互式菜单: ${GREEN}2ray${NC} 或 ${GREEN}${SCRIPT_NAME}${NC}"
 echo -e "  📦 安装 V2Ray: ${GREEN}2ray install${NC} 或 ${GREEN}${SCRIPT_NAME} install${NC}"
 echo -e "  ❓ 查看帮助: ${GREEN}2ray help${NC} 或 ${GREEN}${SCRIPT_NAME} help${NC}"
+echo -e "  🔢 查看版本: ${GREEN}2ray version${NC} 或 ${GREEN}${SCRIPT_NAME} version${NC}"
 echo ""
 echo -e "${CYAN}💡 建议先运行: 2ray help${NC}"
 echo ""
@@ -97,4 +126,5 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     ${SCRIPT_NAME} install
 else
     echo -e "${BLUE}✅ 您可以稍后运行 '${SCRIPT_NAME} install' 来安装 V2Ray${NC}"
+    echo -e "${BLUE}💡 或者使用 '2ray install' 命令${NC}"
 fi
