@@ -125,19 +125,13 @@ echo ""
 echo -e "${CYAN}💡 建议先运行: 2ray help${NC}"
 echo ""
 
-# 检测运行环境并决定是否自动安装
+# 检测运行环境并启动菜单
 if [ -t 0 ]; then
-    # 交互式环境 - 询问用户
-    read -p "🤔 是否立即安装 V2Ray？(y/N): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo -e "${CYAN}🚀 开始安装 V2Ray...${NC}"
-        echo ""
-        ${SCRIPT_NAME} install
-    else
-        echo -e "${BLUE}✅ 您可以稍后运行 '${SCRIPT_NAME} install' 来安装 V2Ray${NC}"
-        echo -e "${BLUE}💡 或者使用 '2ray install' 命令${NC}"
-    fi
+    # 交互式环境 - 直接启动菜单
+    echo -e "${CYAN}🎮 启动 V2Ray 管理菜单...${NC}"
+    echo ""
+    sleep 2
+    exec 2ray
 else
     # 非交互式环境（如管道安装）- 提供使用说明
     echo -e "${CYAN}💡 检测到非交互式安装环境${NC}"

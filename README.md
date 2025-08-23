@@ -28,15 +28,15 @@
 
 ## 📦 安装方法
 
-### 方法1: 一键安装脚本（推荐）
+### 方法1: 一键安装并启动菜单（推荐）
 
-通过一键安装脚本进行安装，安装完成后可通过菜单交互式地管理V2Ray：
+通过一键安装脚本进行安装，安装完成后**自动弹出交互式菜单**：
 
 ```bash
-# 方法1: 直接从GitHub运行（推荐）
+# 方法1: 直接从GitHub运行并启动菜单（推荐）
 curl -fsSL https://raw.githubusercontent.com/JarvanDing/myss/main/install_v2ray.sh | sudo bash
 
-# 方法2: 下载后运行
+# 方法2: 下载后运行并启动菜单
 curl -L -o install_v2ray.sh https://raw.githubusercontent.com/JarvanDing/myss/main/install_v2ray.sh
 chmod +x install_v2ray.sh
 sudo bash install_v2ray.sh
@@ -45,13 +45,13 @@ sudo bash install_v2ray.sh
 **安装流程：**
 1. 📥 **下载管理脚本**：自动下载v2ray_manager.sh到系统
 2. 🔗 **创建命令别名**：创建`2ray`命令便于使用
-3. 🎮 **菜单交互安装**：询问是否立即安装V2Ray（选择Y进入菜单）
-4. 📦 **安装V2Ray**：通过交互式菜单完成V2Ray安装
+3. 🎮 **自动启动菜单**：安装完成后自动进入交互式管理菜单
+4. 📦 **选择安装V2Ray**：在菜单中选择"1"即可安装V2Ray
 
 **特点：**
-- 🎯 **菜单驱动**：通过友好的菜单界面进行操作
+- 🎯 **一步到位**：下载安装脚本并直接进入管理菜单
 - 🔄 **智能检测**：自动检测系统环境和依赖
-- 📋 **交互式安装**：支持自定义配置选项
+- 📋 **交互式操作**：通过友好的菜单界面进行所有操作
 - 🛡️ **安全可靠**：完整的权限检查和错误处理
 
 ### 方法2: 手动下载管理脚本
@@ -86,7 +86,7 @@ sudo ./v2ray_manager.sh
 
 ### 安装后的使用
 
-安装完成后，您将拥有两个主要的使用方式：
+使用一键安装脚本后，会**自动进入交互式菜单**！如需再次使用：
 
 #### 1. 交互式菜单模式（推荐）
 ```bash
@@ -94,7 +94,7 @@ sudo ./v2ray_manager.sh
 2ray
 
 # 或直接使用管理脚本
-sudo ./v2ray_manager.sh
+v2ray_manager.sh
 ```
 
 **菜单功能：**
