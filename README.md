@@ -28,7 +28,25 @@
 
 ## 📦 安装方法
 
-### 方法1: 一键安装脚本（推荐）
+### 方法1: 最简洁的一键安装（推荐）
+
+最简洁的一键安装命令，直接下载并安装V2Ray：
+
+```bash
+# 直接安装（推荐）
+curl -fsSL https://raw.githubusercontent.com/JarvanDing/myss/main/v2ray_manager.sh | sudo bash -s install
+
+# 或交互式安装（可自定义配置）
+curl -fsSL https://raw.githubusercontent.com/JarvanDing/myss/main/v2ray_manager.sh | sudo bash
+```
+
+**特点：**
+- 🚀 **一步到位**：无需下载额外脚本
+- 🔄 **智能检测**：已安装时会友好提示是否覆盖更新
+- 💾 **自动备份**：覆盖安装时自动备份当前配置
+- 📱 **完整功能**：包含所有管理功能和命令别名
+
+### 方法2: 一键安装脚本
 ```bash
 # 下载并运行一键安装脚本
 curl -L -o install_v2ray.sh https://raw.githubusercontent.com/JarvanDing/myss/main/install_v2ray.sh
@@ -170,6 +188,13 @@ sudo ./v2ray_manager.sh uninstall
 ```
 
 ## 📋 版本历史
+
+### v2.0.1 (2025年) - 最新更新
+- 🚀 **新增最简洁一键安装命令**，一步到位安装V2Ray
+- 🔄 **智能重复安装检测**，已安装时友好提示是否覆盖更新
+- 💾 **自动配置备份**，覆盖安装时自动备份当前配置
+- 📋 **优化用户交互**，提供清晰的选择菜单和操作提示
+- 🛡️ **增强安装安全性**，避免文件冲突和数据丢失
 
 ### v2.0.0 (2025年)
 - 🚀 **新增一键安装脚本** (`install_v2ray.sh`)，简化安装流程

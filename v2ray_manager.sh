@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# V2Ray 管理脚本 v2.0.0
+# V2Ray 管理脚本 v2.0.1
 # 支持安装、卸载、服务管理、状态检查等功能
 
 set -e
@@ -25,7 +25,7 @@ V2RAY_VERSION="v5.37.0"
 
 # 显示帮助信息
 show_help() {
-    echo -e "${CYAN}🚀 V2Ray 管理脚本 v2.0.0${NC}"
+    echo -e "${CYAN}🚀 V2Ray 管理脚本 v2.0.1${NC}"
     echo ""
     echo -e "${YELLOW}📋 使用方法:${NC}"
     echo "  $0              # 启动交互式菜单"
@@ -490,6 +490,25 @@ set_permissions() {
 }
 
 # 生成客户端配置
+is_v2ray_installed() {
+    # 检查 V2Ray 是否已安装
+    if [ -f "/usr/local/bin/v2ray" ] && [ -d "/etc/v2ray" ] && [ -f "/etc/v2ray/config.json" ]; then
+        return 0  # 已安装
+    else
+        return 1  # 未安装
+    fi
+}
+
+get_current_v2ray_version() {
+    # 获取当前安装的 V2Ray 版本
+    if [ -f "/usr/local/bin/v2ray" ]; then
+        CURRENT_VERSION=$(/usr/local/bin/v2ray version 2>/dev/null | head -n1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -n1 | sed 's/^/v/' || echo "未知")
+        echo "$CURRENT_VERSION"
+    else
+        echo "未安装"
+    fi
+}
+
 generate_client_config() {
     echo -e "${CYAN}📱 生成客户端配置...${NC}"
 
@@ -608,20 +627,70 @@ EOF
 install_v2ray() {
     echo -e "${CYAN}🚀 开始安装 V2Ray...${NC}"
     echo ""
-    
+
     check_root
     check_dependencies
     check_system
+
+    # 检查是否已安装 V2Ray
+    if is_v2ray_installed; then
+        CURRENT_VERSION=$(get_current_v2ray_version)
+        echo -e "${YELLOW}⚠️  V2Ray 已经安装 (当前版本: ${CURRENT_VERSION})${NC}"
+        echo -e "${BLUE}📋 请选择操作:${NC}"
+        echo -e "   ${GREEN}1${NC}. 覆盖安装 (更新到最新版本: ${V2RAY_VERSION})"
+        echo -e "   ${RED}2${NC}. 取消安装"
+        echo ""
+
+        read -p "🤔 请选择 [1-2]: " -n 1 -r
+        echo ""
+
+        case $REPLY in
+            1)
+                echo -e "${YELLOW}🔄 正在进行覆盖安装...${NC}"
+                echo ""
+
+                # 备份当前配置
+                if [ -f "/etc/v2ray/config.json" ]; then
+                    echo -e "${CYAN}💾 备份当前配置文件...${NC}"
+                    cp "/etc/v2ray/config.json" "/etc/v2ray/config.json.backup.$(date +%Y%m%d_%H%M%S)"
+                    echo -e "${GREEN}✅ 配置已备份${NC}"
+                fi
+
+                # 停止当前服务
+                if systemctl is-active --quiet "$SERVICE_NAME"; then
+                    echo -e "${CYAN}🛑 停止当前服务...${NC}"
+                    systemctl stop "$SERVICE_NAME"
+                    echo -e "${GREEN}✅ 服务已停止${NC}"
+                fi
+
+                # 继续安装流程
+                ;;
+            2)
+                echo -e "${BLUE}✅ 取消安装操作${NC}"
+                echo ""
+                echo -e "${YELLOW}💡 您可以使用以下命令管理已安装的 V2Ray:${NC}"
+                echo -e "   📊 查看状态: ${GREEN}2ray status${NC} 或 ${GREEN}${SCRIPT_NAME} status${NC}"
+                echo -e "   🔄 更新内核: ${GREEN}2ray update${NC} 或 ${GREEN}${SCRIPT_NAME} update${NC}"
+                echo -e "   📱 查看配置: ${GREEN}2ray config${NC} 或 ${GREEN}${SCRIPT_NAME} config${NC}"
+                exit 0
+                ;;
+            *)
+                echo -e "${RED}❌ 无效选择，使用默认操作：覆盖安装${NC}"
+                echo ""
+                ;;
+        esac
+    fi
+
     download_v2ray
     create_directories
     generate_config
     create_service
     set_permissions
-    
+
     echo -e "${CYAN}▶️  启动 V2Ray 服务...${NC}"
     systemctl enable "$SERVICE_NAME"
     systemctl start "$SERVICE_NAME"
-    
+
     if systemctl is-active --quiet "$SERVICE_NAME"; then
         echo -e "${GREEN}✅ V2Ray 服务启动成功${NC}"
     else
@@ -629,9 +698,9 @@ install_v2ray() {
         systemctl status "$SERVICE_NAME"
         exit 1
     fi
-    
+
     generate_client_config
-    
+
     # 创建 2ray 命令别名
     echo -e "${CYAN}🔗 创建 2ray 命令别名...${NC}"
     cat > /usr/local/bin/2ray << 'EOF'
@@ -645,7 +714,7 @@ EOF
     chmod +x /usr/local/bin/2ray
     echo -e "${GREEN}✅ 2ray 命令创建完成${NC}"
     echo ""
-    
+
     echo -e "${GREEN}🎉 V2Ray 安装完成！${NC}"
     echo ""
     echo -e "${YELLOW}📋 下一步操作:${NC}"
@@ -1074,7 +1143,7 @@ show_info() {
 # 显示交互式菜单
 show_menu() {
     clear
-    echo -e "${CYAN}🚀 V2Ray 管理脚本 v2.0.0${NC}"
+    echo -e "${CYAN}🚀 V2Ray 管理脚本 v2.0.1${NC}"
     echo ""
     echo -e "${YELLOW}📋 请选择要执行的操作:${NC}"
     echo ""
@@ -1156,7 +1225,7 @@ handle_menu_choice() {
         11)
             echo -e "${CYAN}🎯 选择: 显示版本信息${NC}"
             echo ""
-            echo -e "${CYAN}🚀 V2Ray 管理脚本 v2.0.0${NC}"
+            echo -e "${CYAN}🚀 V2Ray 管理脚本 v2.0.1${NC}"
             echo -e "${BLUE}📅 更新日期: 2025年${NC}"
             ;;
         12)
@@ -1255,7 +1324,7 @@ main() {
             update_v2ray
             ;;
         version)
-            echo -e "${CYAN}🚀 V2Ray 管理脚本 v2.0.0${NC}"
+            echo -e "${CYAN}🚀 V2Ray 管理脚本 v2.0.1${NC}"
             echo -e "${BLUE}📅 更新日期: 2025年${NC}"
             ;;
         menu)
