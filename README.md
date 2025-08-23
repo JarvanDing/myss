@@ -28,31 +28,35 @@
 
 ## 📦 安装方法
 
-### 方法1: 一键安装并启动菜单（推荐）
+### 方法1: 一键安装脚本（推荐）
 
-**改进的安装脚本**，安装完成后可选择立即启动菜单：
+推荐使用以下命令，它**简短、不留文件，并且能自动启动管理菜单**。
 
 ```bash
-# 方法1: 直接从GitHub运行（推荐）
-curl -fsSL https://raw.githubusercontent.com/JarvanDing/myss/main/install_v2ray.sh | sudo bash
+# 推荐：一键安装并自动启动菜单
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/JarvanDing/myss/main/install_v2ray.sh)"
+```
 
-# 方法2: 下载后运行
-curl -L -o install_v2ray.sh https://raw.githubusercontent.com/JarvanDing/myss/main/install_v2ray.sh
-chmod +x install_v2ray.sh
-sudo bash install_v2ray.sh
+如果上述命令因网络或权限问题失败，您也可以使用传统的管道安装方式，但需要在安装后**手动运行 `2ray` 命令**来启动菜单。
+
+```bash
+# 备用：管道安装（需手动启动菜单）
+curl -fsSL https://raw.githubusercontent.com/JarvanDing/myss/main/install_v2ray.sh | sudo bash
+# 安装后手动运行:
+2ray
 ```
 
 **安装流程：**
-1. 📥 **下载管理脚本**：自动下载v2ray_manager.sh到系统
-2. 🔗 **创建命令别名**：创建`2ray`命令便于使用
-3. 🎮 **选择启动菜单**：安装完成后询问是否立即启动菜单
-4. 📦 **安装V2Ray**：在菜单中选择"1"即可安装V2Ray
+1. 📥 **下载管理脚本**：自动下载`v2ray_manager.sh`到系统。
+2. 🔗 **创建命令别名**：创建`2ray`命令便于使用。
+3. 🎮 **启动菜单**：推荐的命令会自动启动菜单。
+4. 📦 **安装V2Ray**：在菜单中选择"1"即可安装V2Ray。
 
 **特点：**
-- 🎯 **用户友好**：安装完成后可选择立即启动菜单
-- 🔄 **智能检测**：自动检测系统环境和依赖
-- 📋 **交互式操作**：通过友好的菜单界面进行所有操作
-- 🛡️ **安全可靠**：完整的权限检查和错误处理
+- 🎯 **一步到位**：单行命令完成安装并进入菜单。
+- 🔄 **智能检测**：自动检测运行环境，适配交互和非交互模式。
+- 📋 **干净利落**：安装过程不在当前目录留下任何文件。
+- 🛡️ **安全可靠**：完整的权限检查和错误处理。
 
 ### 方法2: 手动下载管理脚本
 
@@ -70,19 +74,13 @@ sudo ./v2ray_manager.sh
 ```
 
 ### 方法3: 使用别名命令
-安装完成后，可以使用 `2ray` 命令（所有安装脚本都会自动创建）：
+安装完成后，可以使用 `2ray` 命令：
 ```bash
 # 启动交互式菜单
 2ray
 
 # 查看帮助
 2ray help
-
-# 查看状态
-2ray status
-
-# 查看配置
-2ray config
 ```
 
 ## 🎮 使用方法
