@@ -1253,6 +1253,9 @@ interactive_menu() {
         echo -e "${YELLOW}请输入选项编号 (0-12):${NC} "
         read -p "> " choice
 
+        # 去除输入中的空白字符（包括换行符）
+        choice=$(echo "$choice" | tr -d '[:space:]')
+
         # 检查输入是否为空
         if [ -z "$choice" ]; then
             echo -e "${RED}❌ 请输入有效的选项编号${NC}"
