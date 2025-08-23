@@ -28,33 +28,36 @@
 
 ## 📦 安装方法
 
-### 方法1: 最简洁的一键安装（推荐）
+### 方法1: 一键安装脚本（推荐）
 
-最简洁的一键安装命令，直接下载并安装V2Ray：
+通过一键安装脚本进行安装，安装完成后可通过菜单交互式地管理V2Ray：
 
 ```bash
-# 直接安装（推荐）
-curl -fsSL https://raw.githubusercontent.com/JarvanDing/myss/main/v2ray_manager.sh | sudo bash -s install
+# 方法1: 直接从GitHub运行（推荐）
+curl -fsSL https://raw.githubusercontent.com/JarvanDing/myss/main/install_v2ray.sh | sudo bash
 
-# 或交互式安装（可自定义配置）
-curl -fsSL https://raw.githubusercontent.com/JarvanDing/myss/main/v2ray_manager.sh | sudo bash
-```
-
-**特点：**
-- 🚀 **一步到位**：无需下载额外脚本
-- 🔄 **智能检测**：已安装时会友好提示是否覆盖更新
-- 💾 **自动备份**：覆盖安装时自动备份当前配置
-- 📱 **完整功能**：包含所有管理功能和命令别名
-
-### 方法2: 一键安装脚本
-```bash
-# 下载并运行一键安装脚本
+# 方法2: 下载后运行
 curl -L -o install_v2ray.sh https://raw.githubusercontent.com/JarvanDing/myss/main/install_v2ray.sh
 chmod +x install_v2ray.sh
 sudo bash install_v2ray.sh
 ```
 
+**安装流程：**
+1. 📥 **下载管理脚本**：自动下载v2ray_manager.sh到系统
+2. 🔗 **创建命令别名**：创建`2ray`命令便于使用
+3. 🎮 **菜单交互安装**：询问是否立即安装V2Ray（选择Y进入菜单）
+4. 📦 **安装V2Ray**：通过交互式菜单完成V2Ray安装
+
+**特点：**
+- 🎯 **菜单驱动**：通过友好的菜单界面进行操作
+- 🔄 **智能检测**：自动检测系统环境和依赖
+- 📋 **交互式安装**：支持自定义配置选项
+- 🛡️ **安全可靠**：完整的权限检查和错误处理
+
 ### 方法2: 手动下载管理脚本
+
+直接下载管理脚本进行安装，适合需要更多控制的用户：
+
 ```bash
 # 下载管理脚本
 curl -L -o v2ray_manager.sh https://raw.githubusercontent.com/JarvanDing/myss/main/v2ray_manager.sh
@@ -62,8 +65,8 @@ curl -L -o v2ray_manager.sh https://raw.githubusercontent.com/JarvanDing/myss/ma
 # 添加执行权限
 chmod +x v2ray_manager.sh
 
-# 安装 V2Ray
-sudo ./v2ray_manager.sh install
+# 运行管理脚本（会显示交互式菜单）
+sudo ./v2ray_manager.sh
 ```
 
 ### 方法3: 使用别名命令
@@ -81,14 +84,34 @@ sudo ./v2ray_manager.sh install
 
 ## 🎮 使用方法
 
-### 交互式菜单模式
+### 安装后的使用
+
+安装完成后，您将拥有两个主要的使用方式：
+
+#### 1. 交互式菜单模式（推荐）
 ```bash
+# 使用2ray别名（推荐）
+2ray
+
+# 或直接使用管理脚本
 sudo ./v2ray_manager.sh
-# 或者
-sudo 2ray
 ```
 
-### 命令行模式
+**菜单功能：**
+- 📦 安装 V2Ray (默认开机启动)
+- 🗑️  卸载 V2Ray
+- ▶️  启动服务
+- ⏹️  停止服务
+- 🔄 重启服务
+- 📊 查看服务状态
+- 📝 查看日志
+- 📱 查看客户端配置
+- 🔄 更新 V2Ray 内核
+- ℹ️  显示详细信息
+- 🔢 显示版本信息
+- ❓ 显示帮助
+
+#### 2. 命令行模式
 ```bash
 # 安装 V2Ray
 sudo ./v2ray_manager.sh install
@@ -189,7 +212,14 @@ sudo ./v2ray_manager.sh uninstall
 
 ## 📋 版本历史
 
-### v2.0.1 (2025年) - 最新更新
+### v2.1.2 (2025年) - 最新更新
+- 🔍 **智能重复安装检测**，已安装时显示友好的选择菜单
+- 🎮 **增强用户交互**，提供重新安装、进入菜单或退出的选项
+- 🛡️ **改进错误处理**，避免重复安装时的冲突和错误
+- 📋 **优化安装流程**，更直观的用户体验和操作提示
+- 🔄 **完善脚本逻辑**，支持非交互式和交互式两种运行模式
+
+### v2.1.0 (2025年)
 - 🚀 **新增最简洁一键安装命令**，一步到位安装V2Ray
 - 🔄 **智能重复安装检测**，已安装时友好提示是否覆盖更新
 - 💾 **自动配置备份**，覆盖安装时自动备份当前配置

@@ -105,6 +105,42 @@ rm -f /tmp/${SCRIPT_NAME}
 echo -e "${GREEN}✅ 清理临时文件完成${NC}"
 echo ""
 
+# 检查是否已经安装了管理脚本
+if [ -f "/usr/local/bin/${SCRIPT_NAME}" ] && [ -f "/usr/local/bin/2ray" ]; then
+    echo -e "${YELLOW}⚠️  V2Ray 管理脚本已经安装${NC}"
+    echo -e "${BLUE}📋 请选择操作:${NC}"
+    echo -e "   ${GREEN}1${NC}. 重新安装管理脚本 (更新到最新版本)"
+    echo -e "   ${GREEN}2${NC}. 直接进入管理菜单"
+    echo -e "   ${RED}3${NC}. 退出"
+    echo ""
+
+    while true; do
+        read -p "🤔 请选择 [1-3]: " -n 1 -r
+        echo ""
+
+        case $REPLY in
+            1)
+                echo -e "${YELLOW}🔄 正在重新安装管理脚本...${NC}"
+                echo ""
+                break
+                ;;
+            2)
+                echo -e "${BLUE}🎮 启动管理菜单...${NC}"
+                echo ""
+                2ray
+                exit 0
+                ;;
+            3)
+                echo -e "${BLUE}✅ 已退出${NC}"
+                exit 0
+                ;;
+            *)
+                echo -e "${RED}❌ 无效选择，请重新输入${NC}"
+                ;;
+        esac
+    done
+fi
+
 # 显示使用说明
 echo -e "${GREEN}🎉 V2Ray 管理脚本安装完成！${NC}"
 echo ""
