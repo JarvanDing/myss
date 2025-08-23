@@ -108,37 +108,9 @@ echo ""
 # 检查是否已经安装了管理脚本
 if [ -f "/usr/local/bin/${SCRIPT_NAME}" ] && [ -f "/usr/local/bin/2ray" ]; then
     echo -e "${YELLOW}⚠️  V2Ray 管理脚本已经安装${NC}"
-    echo -e "${BLUE}📋 请选择操作:${NC}"
-    echo -e "   ${GREEN}1${NC}. 重新安装管理脚本 (更新到最新版本)"
-    echo -e "   ${GREEN}2${NC}. 直接进入管理菜单"
-    echo -e "   ${RED}3${NC}. 退出"
+    echo -e "${BLUE}📋 检测到在线安装模式，将自动重新安装管理脚本${NC}"
+    echo -e "${YELLOW}🔄 正在重新安装管理脚本...${NC}"
     echo ""
-
-    while true; do
-        read -p "🤔 请选择 [1-3]: " -n 1 -r
-        echo ""
-
-        case $REPLY in
-            1)
-                echo -e "${YELLOW}🔄 正在重新安装管理脚本...${NC}"
-                echo ""
-                break
-                ;;
-            2)
-                echo -e "${BLUE}🎮 启动管理菜单...${NC}"
-                echo ""
-                2ray
-                exit 0
-                ;;
-            3)
-                echo -e "${BLUE}✅ 已退出${NC}"
-                exit 0
-                ;;
-            *)
-                echo -e "${RED}❌ 无效选择，请重新输入${NC}"
-                ;;
-        esac
-    done
 fi
 
 # 显示使用说明
@@ -153,14 +125,27 @@ echo ""
 echo -e "${CYAN}💡 建议先运行: 2ray help${NC}"
 echo ""
 
-# 询问是否立即安装 V2Ray
-read -p "🤔 是否立即安装 V2Ray？(y/N): " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo -e "${CYAN}🚀 开始安装 V2Ray...${NC}"
-    echo ""
-    ${SCRIPT_NAME} install
+# 检测运行环境并决定是否自动安装
+if [ -t 0 ]; then
+    # 交互式环境 - 询问用户
+    read -p "🤔 是否立即安装 V2Ray？(y/N): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo -e "${CYAN}🚀 开始安装 V2Ray...${NC}"
+        echo ""
+        ${SCRIPT_NAME} install
+    else
+        echo -e "${BLUE}✅ 您可以稍后运行 '${SCRIPT_NAME} install' 来安装 V2Ray${NC}"
+        echo -e "${BLUE}💡 或者使用 '2ray install' 命令${NC}"
+    fi
 else
-    echo -e "${BLUE}✅ 您可以稍后运行 '${SCRIPT_NAME} install' 来安装 V2Ray${NC}"
-    echo -e "${BLUE}💡 或者使用 '2ray install' 命令${NC}"
+    # 非交互式环境（如管道安装）- 提供使用说明
+    echo -e "${CYAN}💡 检测到非交互式安装环境${NC}"
+    echo -e "${YELLOW}📋 下一步操作：${NC}"
+    echo -e "   1. 🎮 运行交互式菜单: ${GREEN}2ray${NC}"
+    echo -e "   2. 📦 直接安装V2Ray: ${GREEN}2ray install${NC}"
+    echo -e "   3. 📊 查看状态: ${GREEN}2ray status${NC}"
+    echo -e "   4. ❓ 查看帮助: ${GREEN}2ray help${NC}"
+    echo ""
+    echo -e "${BLUE}✅ 管理脚本安装完成，请使用上述命令进行下一步操作${NC}"
 fi

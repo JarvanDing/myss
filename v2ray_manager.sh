@@ -256,11 +256,15 @@ update_v2ray() {
     echo -e "${YELLOW}⚠️  当前版本: $CURRENT_VERSION${NC}"
     
     # 确认更新
-    read -p "🤔 确定要更新到 $LATEST_VERSION 吗？(y/N): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo -e "${BLUE}✅ 取消更新${NC}"
-        exit 0
+    if [ -t 0 ]; then
+        read -p "🤔 确定要更新到 $LATEST_VERSION 吗？(y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo -e "${BLUE}✅ 取消更新${NC}"
+            exit 0
+        fi
+    else
+        echo -e "${YELLOW}检测到非交互式环境，自动确认更新${NC}"
     fi
     
     # 备份当前版本
@@ -641,8 +645,13 @@ install_v2ray() {
         echo -e "   ${RED}2${NC}. 取消安装"
         echo ""
 
-        read -p "🤔 请选择 [1-2]: " -n 1 -r
-        echo ""
+        if [ -t 0 ]; then
+            read -p "🤔 请选择 [1-2]: " -n 1 -r
+            echo ""
+        else
+            echo -e "${YELLOW}检测到非交互式环境，默认选择覆盖安装${NC}"
+            REPLY="1"
+        fi
 
         case $REPLY in
             1)
@@ -734,11 +743,17 @@ uninstall_v2ray() {
     check_root
     
     echo -e "${YELLOW}⚠️  此操作将完全删除 V2Ray 及其所有数据${NC}"
-    read -p "🤔 确定要继续吗？(y/N): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo -e "${BLUE}✅ 取消卸载操作${NC}"
-        exit 0
+    if [ -t 0 ]; then
+        read -p "🤔 确定要继续吗？(y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo -e "${BLUE}✅ 取消卸载操作${NC}"
+            exit 0
+        fi
+    else
+        echo -e "${YELLOW}检测到非交互式环境，跳过卸载确认${NC}"
+        echo -e "${RED}⚠️  非交互式环境下不支持卸载操作${NC}"
+        exit 1
     fi
     
     echo -e "${CYAN}🛑 停止 V2Ray 服务...${NC}"
