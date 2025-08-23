@@ -125,21 +125,40 @@ echo ""
 echo -e "${CYAN}💡 建议先运行: 2ray help${NC}"
 echo ""
 
-# 检测运行环境并启动菜单
-if [ -t 0 ]; then
-    # 交互式环境 - 直接启动菜单
-    echo -e "${CYAN}🎮 启动 V2Ray 管理菜单...${NC}"
-    echo ""
-    sleep 2
-    exec 2ray
-else
-    # 非交互式环境（如管道安装）- 提供使用说明
-    echo -e "${CYAN}💡 检测到非交互式安装环境${NC}"
-    echo -e "${YELLOW}📋 下一步操作：${NC}"
-    echo -e "   1. 🎮 运行交互式菜单: ${GREEN}2ray${NC}"
-    echo -e "   2. 📦 直接安装V2Ray: ${GREEN}2ray install${NC}"
-    echo -e "   3. 📊 查看状态: ${GREEN}2ray status${NC}"
-    echo -e "   4. ❓ 查看帮助: ${GREEN}2ray help${NC}"
-    echo ""
-    echo -e "${BLUE}✅ 管理脚本安装完成，请使用上述命令进行下一步操作${NC}"
-fi
+# 提供下一步操作指引并尝试启动菜单
+echo -e "${GREEN}🎉 管理脚本安装完成！${NC}"
+echo ""
+
+# 询问用户是否要立即启动菜单
+echo -e "${CYAN}📋 请选择下一步操作：${NC}"
+echo -e "   ${GREEN}1${NC}. 立即启动交互式菜单"
+echo -e "   ${GREEN}2${NC}. 稍后手动运行"
+echo ""
+
+read -p "🤔 请选择 [1-2]: " -n 1 -r
+echo ""
+
+case $REPLY in
+    1)
+        echo -e "${CYAN}🎮 启动 V2Ray 管理菜单...${NC}"
+        echo ""
+        sleep 2
+        exec /usr/local/bin/v2ray_manager.sh
+        ;;
+    2)
+        echo -e "${BLUE}✅ 您可以稍后运行以下命令：${NC}"
+        echo ""
+        echo -e "${YELLOW}👉 启动交互式菜单：${NC}"
+        echo -e "${GREEN}2ray${NC}"
+        echo ""
+        echo -e "${YELLOW}👉 或直接安装V2Ray：${NC}"
+        echo -e "${GREEN}2ray install${NC}"
+        ;;
+    *)
+        echo -e "${YELLOW}⚠️  无效选择，默认启动菜单${NC}"
+        echo -e "${CYAN}🎮 启动 V2Ray 管理菜单...${NC}"
+        echo ""
+        sleep 2
+        exec /usr/local/bin/v2ray_manager.sh
+        ;;
+esac
