@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Xray 一键安装脚本 v2.0.0
+# Xray 一键安装脚本 v2.0.2
 # 从 GitHub 下载并运行 Xray 管理脚本
 
 set -e
@@ -19,7 +19,7 @@ GITHUB_BRANCH="main"
 SCRIPT_NAME="xray_manager.sh"
 SCRIPT_URL="https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${SCRIPT_NAME}"
 
-echo -e "${CYAN}🚀 Xray 一键安装脚本 v2.0.0${NC}"
+echo -e "${CYAN}🚀 Xray 一键安装脚本 v2.0.2${NC}"
 echo -e "${CYAN}📦 正在从 GitHub 下载管理脚本...${NC}"
 echo ""
 
@@ -86,18 +86,18 @@ echo -e "${CYAN}📁 安装到系统目录...${NC}"
 cp /tmp/${SCRIPT_NAME} /usr/local/bin/
 echo -e "${GREEN}✅ 安装完成: /usr/local/bin/${SCRIPT_NAME}${NC}"
 
-# 创建 xray 命令别名
-echo -e "${CYAN}🔗 创建 xray 命令别名...${NC}"
-cat > /usr/local/bin/xray << 'EOF'
+# 创建 xmanager 命令别名
+echo -e "${CYAN}🔗 创建 xmanager 命令别名...${NC}"
+cat > /usr/local/bin/xmanager << 'EOF'
 #!/bin/bash
 # Xray 管理命令别名
-# 使用 xray 命令快速管理 Xray
+# 使用 xmanager 命令快速管理 Xray
 
 exec /usr/local/bin/xray_manager.sh "$@"
 EOF
 
-chmod +x /usr/local/bin/xray
-echo -e "${GREEN}✅ xray 命令创建完成${NC}"
+chmod +x /usr/local/bin/xmanager
+echo -e "${GREEN}✅ xmanager 命令创建完成${NC}"
 echo ""
 
 # 清理临时文件
@@ -106,7 +106,7 @@ echo -e "${GREEN}✅ 清理临时文件完成${NC}"
 echo ""
 
 # 检查是否已经安装了管理脚本
-if [ -f "/usr/local/bin/${SCRIPT_NAME}" ] && [ -f "/usr/local/bin/xray" ]; then
+if [ -f "/usr/local/bin/${SCRIPT_NAME}" ] && [ -f "/usr/local/bin/xmanager" ]; then
     echo -e "${YELLOW}⚠️  Xray 管理脚本已经安装${NC}"
     echo -e "${BLUE}📋 检测到在线安装模式，将自动重新安装管理脚本${NC}"
     echo -e "${YELLOW}🔄 正在重新安装管理脚本...${NC}"
@@ -117,12 +117,12 @@ fi
 echo -e "${GREEN}🎉 Xray 管理脚本安装完成！${NC}"
 echo ""
 echo -e "${YELLOW}📋 使用方法:${NC}"
-echo -e "  🎮 交互式菜单: ${GREEN}xray${NC} 或 ${GREEN}${SCRIPT_NAME}${NC}"
-echo -e "  📦 安装 Xray: ${GREEN}xray install${NC} 或 ${GREEN}${SCRIPT_NAME} install${NC}"
-echo -e "  ❓ 查看帮助: ${GREEN}xray help${NC} 或 ${GREEN}${SCRIPT_NAME} help${NC}"
-echo -e "  🔢 查看版本: ${GREEN}xray version${NC} 或 ${GREEN}${SCRIPT_NAME} version${NC}"
+echo -e "  🎮 交互式菜单: ${GREEN}xmanager${NC} 或 ${GREEN}${SCRIPT_NAME}${NC}"
+echo -e "  📦 安装 Xray: ${GREEN}xmanager install${NC} 或 ${GREEN}${SCRIPT_NAME} install${NC}"
+echo -e "  ❓ 查看帮助: ${GREEN}xmanager help${NC} 或 ${GREEN}${SCRIPT_NAME} help${NC}"
+echo -e "  🔢 查看版本: ${GREEN}xmanager version${NC} 或 ${GREEN}${SCRIPT_NAME} version${NC}"
 echo ""
-echo -e "${CYAN}💡 建议先运行: xray help${NC}"
+echo -e "${CYAN}💡 建议先运行: xmanager help${NC}"
 echo ""
 
 # 安装完成后的操作
@@ -142,9 +142,9 @@ else
     echo -e "${CYAN}📋 请手动运行以下命令启动菜单：${NC}"
     echo ""
     echo -e "${YELLOW}👉 启动交互式菜单：${NC}"
-    echo -e "   ${GREEN}xray${NC}"
+    echo -e "   ${GREEN}xmanager${NC}"
     echo ""
     echo -e "${YELLOW}👉 或直接安装Xray：${NC}"
-    echo -e "   ${GREEN}xray install${NC}"
+    echo -e "   ${GREEN}xmanager install${NC}"
     echo ""
 fi

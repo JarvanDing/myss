@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# V2Ray 管理脚本 v2.0.1
+# V2Ray 管理脚本 v2.0.2
 # 支持安装、卸载、服务管理、状态检查等功能
 
 set -e
@@ -25,7 +25,7 @@ V2RAY_VERSION="v5.37.0"
 
 # 显示帮助信息
 show_help() {
-    echo -e "${CYAN}🚀 V2Ray 管理脚本 v2.0.1${NC}"
+    echo -e "${CYAN}🚀 V2Ray 管理脚本 v2.0.2${NC}"
     echo ""
     echo -e "${YELLOW}📋 使用方法:${NC}"
     echo "  $0              # 启动交互式菜单"
@@ -1125,8 +1125,8 @@ show_info() {
 
     echo -e "${CYAN}📋 脚本信息:${NC}"
     echo -e "   📂 脚本路径: $SCRIPT_DIR/v2ray_manager.sh"
-    echo -e "   🔢 脚本版本: 2.0.0"
-    echo -e "   📅 更新日期: 2025年"
+    echo -e "   🔢 脚本版本: 2.0.2"
+    echo -e "   📅 更新日期: 2025.8"
     echo ""
 
     if [ -f "/usr/local/bin/v2ray" ]; then
@@ -1158,7 +1158,7 @@ show_info() {
 # 显示交互式菜单
 show_menu() {
     clear
-    echo -e "${CYAN}🚀 V2Ray 管理脚本 v2.0.1${NC}"
+    echo -e "${CYAN}🚀 V2Ray 管理脚本 v2.0.2${NC}"
     echo ""
     echo -e "${YELLOW}📋 请选择要执行的操作:${NC}"
     echo ""
@@ -1240,8 +1240,8 @@ handle_menu_choice() {
         11)
             echo -e "${CYAN}🎯 选择: 显示版本信息${NC}"
             echo ""
-            echo -e "${CYAN}🚀 V2Ray 管理脚本 v2.0.1${NC}"
-            echo -e "${BLUE}📅 更新日期: 2025年${NC}"
+            echo -e "${CYAN}🚀 V2Ray 管理脚本 v2.0.2${NC}"
+            echo -e "${BLUE}📅 更新日期: 2025.8${NC}"
             ;;
         12)
             echo -e "${CYAN}🎯 选择: 显示帮助${NC}"
@@ -1342,8 +1342,8 @@ main() {
             update_v2ray
             ;;
         version)
-            echo -e "${CYAN}🚀 V2Ray 管理脚本 v2.0.1${NC}"
-            echo -e "${BLUE}📅 更新日期: 2025年${NC}"
+            echo -e "${CYAN}🚀 V2Ray 管理脚本 v2.0.2${NC}"
+            echo -e "${BLUE}📅 更新日期: 2025.8${NC}"
             ;;
         menu)
             interactive_menu

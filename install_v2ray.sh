@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# V2Ray 一键安装脚本 v2.0.0
+# V2Ray 一键安装脚本 v2.0.2
 # 从 GitHub 下载并运行 V2Ray 管理脚本
 
 set -e
@@ -19,7 +19,7 @@ GITHUB_BRANCH="main"
 SCRIPT_NAME="v2ray_manager.sh"
 SCRIPT_URL="https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${SCRIPT_NAME}"
 
-echo -e "${CYAN}🚀 V2Ray 一键安装脚本 v2.0.0${NC}"
+echo -e "${CYAN}🚀 V2Ray 一键安装脚本 v2.0.2${NC}"
 echo -e "${CYAN}📦 正在从 GitHub 下载管理脚本...${NC}"
 echo ""
 

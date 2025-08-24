@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Xray 管理脚本 v2.0.1
+# Xray 管理脚本 v2.0.2
 # 支持安装、卸载、服务管理、状态检查等功能
 
 set -e
@@ -26,7 +26,7 @@ XRAY_VERSION="v25.8.3"
 
 # 显示帮助信息
 show_help() {
-    echo -e "${CYAN}🚀 Xray 管理脚本 v2.0.1${NC}"
+    echo -e "${CYAN}🚀 Xray 管理脚本 v2.0.2${NC}"
     echo ""
     echo -e "${YELLOW}📋 使用方法:${NC}"
     echo "  $0              # 启动交互式菜单"
@@ -183,18 +183,21 @@ download_xray() {
         echo -e "${RED}❌ 下载失败${NC}"
         exit 1
     fi
-    
-    if unzip -o xray.zip -d /tmp/xray &> /dev/null; then
+
+    # 创建安全的临时目录
+    TEMP_DIR=$(mktemp -d -t xray.XXXXXX)
+    if unzip -o xray.zip -d "$TEMP_DIR" &> /dev/null; then
         echo -e "${GREEN}✅ 解压完成${NC}"
     else
         echo -e "${RED}❌ 解压失败${NC}"
+        rm -rf "$TEMP_DIR" xray.zip
         exit 1
     fi
-    
-    cp /tmp/xray/xray /usr/local/bin/
+
+    cp "$TEMP_DIR/xray" /usr/local/bin/
     chmod +x /usr/local/bin/xray
-    
-    rm -rf /tmp/xray xray.zip
+
+    rm -rf "$TEMP_DIR" xray.zip
     echo -e "${GREEN}✅ Xray 二进制文件安装完成${NC}"
     echo ""
 }
@@ -325,21 +328,24 @@ update_xray() {
         systemctl start "$SERVICE_NAME" 2>/dev/null || true
         exit 1
     fi
-    
-    if unzip -o xray.zip -d /tmp/xray &> /dev/null; then
+
+    # 创建安全的临时目录
+    TEMP_DIR=$(mktemp -d -t xray.XXXXXX)
+    if unzip -o xray.zip -d "$TEMP_DIR" &> /dev/null; then
         echo -e "${GREEN}✅ 解压完成${NC}"
     else
         echo -e "${RED}❌ 解压失败${NC}"
+        rm -rf "$TEMP_DIR" xray.zip
         # 恢复原版本
         systemctl start "$SERVICE_NAME" 2>/dev/null || true
         exit 1
     fi
-    
+
     # 替换二进制文件
-    cp /tmp/xray/xray /usr/local/bin/
+    cp "$TEMP_DIR/xray" /usr/local/bin/
     chmod +x /usr/local/bin/xray
-    
-    rm -rf /tmp/xray xray.zip
+
+    rm -rf "$TEMP_DIR" xray.zip
     
     # 启动服务
     echo -e "${CYAN}▶️  启动 Xray 服务...${NC}"
@@ -1131,7 +1137,7 @@ show_info() {
     echo -e "${CYAN}📋 脚本信息:${NC}"
     echo -e "   📂 脚本路径: $SCRIPT_DIR/xray_manager.sh"
     echo -e "   🔢 脚本版本: 2.0.1"
-    echo -e "   📅 更新日期: 2025年"
+    echo -e "   📅 更新日期: 2025.8"
     echo ""
 
     if [ -f "/usr/local/bin/xray" ]; then
@@ -1163,7 +1169,7 @@ show_info() {
 # 显示交互式菜单
 show_menu() {
     clear
-    echo -e "${CYAN}🚀 Xray 管理脚本 v2.0.1${NC}"
+    echo -e "${CYAN}🚀 Xray 管理脚本 v2.0.2${NC}"
     echo ""
     echo -e "${YELLOW}📋 请选择要执行的操作:${NC}"
     echo ""
@@ -1245,8 +1251,8 @@ handle_menu_choice() {
         11)
             echo -e "${CYAN}🎯 选择: 显示版本信息${NC}"
             echo ""
-            echo -e "${CYAN}🚀 Xray 管理脚本 v2.0.1${NC}"
-            echo -e "${BLUE}📅 更新日期: 2025年${NC}"
+            echo -e "${CYAN}🚀 Xray 管理脚本 v2.0.2${NC}"
+            echo -e "${BLUE}📅 更新日期: 2025.8${NC}"
             ;;
         12)
             echo -e "${CYAN}🎯 选择: 显示帮助${NC}"
@@ -1347,8 +1353,8 @@ main() {
             update_xray
             ;;
         version)
-            echo -e "${CYAN}🚀 Xray 管理脚本 v2.0.1${NC}"
-            echo -e "${BLUE}📅 更新日期: 2025年${NC}"
+            echo -e "${CYAN}🚀 Xray 管理脚本 v2.0.2${NC}"
+            echo -e "${BLUE}📅 更新日期: 2025.8${NC}"
             ;;
         menu)
             interactive_menu
